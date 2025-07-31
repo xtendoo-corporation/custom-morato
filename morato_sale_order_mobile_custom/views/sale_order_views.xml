@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_mobile_hide_fields" model="ir.ui.view">
+        <field name="name">sale.order.form.mobile.hide.fields</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Ocultar campos en móvil para pedidos de venta -->
+
+            <xpath expr="//field[@name='payment_term_id']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='pricelist_id']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='date_order']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='validity_date']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='delivery_zone_id']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+
+            <!-- Botones móviles después del header -->
+            <xpath expr="//header" position="after">
+                <div class="o_mobile_only" style="display: flex; gap: 8px; align-items: center; margin: 8px 0;">
+                    <button name="action_mobile_custom"
+                            type="object"
+                            string="Confirmar Pedido"
+                            class="btn btn-primary"
+                            invisible="state in ['sale', 'done', 'cancel']"
+                    />
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
