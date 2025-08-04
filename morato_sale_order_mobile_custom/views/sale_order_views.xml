@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="action_sale_ticket_client" model="ir.actions.client">
+        <field name="name">Ticket de Venta</field>
+        <field name="tag">sale_ticket_pos</field>
+        <field name="target">new</field>
+    </record>
+
     <record id="view_order_form_mobile_hide_fields" model="ir.ui.view">
         <field name="name">sale.order.form.mobile.hide.fields</field>
         <field name="model">sale.order</field>
@@ -7,21 +13,21 @@
         <field name="arch" type="xml">
             <!-- Ocultar campos en móvil para pedidos de venta -->
 
-            <xpath expr="//field[@name='payment_term_id']" position="attributes">
-                <attribute name="class">o_mobile_hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='pricelist_id']" position="attributes">
-                <attribute name="class">o_mobile_hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='date_order']" position="attributes">
-                <attribute name="class">o_mobile_hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='validity_date']" position="attributes">
-                <attribute name="class">o_mobile_hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='delivery_zone_id']" position="attributes">
-                <attribute name="class">o_mobile_hide</attribute>
-            </xpath>
+            <!--            <xpath expr="//field[@name='payment_term_id']" position="attributes">-->
+            <!--                <attribute name="class">o_mobile_hide</attribute>-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//field[@name='pricelist_id']" position="attributes">-->
+            <!--                <attribute name="class">o_mobile_hide</attribute>-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//field[@name='date_order']" position="attributes">-->
+            <!--                <attribute name="class">o_mobile_hide</attribute>-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//field[@name='validity_date']" position="attributes">-->
+            <!--                <attribute name="class">o_mobile_hide</attribute>-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//field[@name='delivery_zone_id']" position="attributes">-->
+            <!--                <attribute name="class">o_mobile_hide</attribute>-->
+            <!--            </xpath>-->
 
             <!-- Botones móviles después del header -->
             <xpath expr="//header" position="after">
@@ -32,6 +38,12 @@
                             class="btn btn-primary"
                             invisible="state in ['sale', 'done', 'cancel']"
                     />
+                <button name="%(action_sale_ticket_client)d"
+        type="action"
+        string="Ver Ticket"
+        class="btn btn-secondary"
+        context="{'order_id': id}"/>
+
                 </div>
             </xpath>
         </field>

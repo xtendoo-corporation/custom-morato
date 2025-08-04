@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+      <record id="paperformat_ticket_58mm" model="report.paperformat">
+        <field name="name">Ticket 58mm</field>
+        <field name="default" eval="False"/>
+        <field name="format">custom</field>
+        <field name="page_height">110</field> <!-- Altura en mm -->
+        <field name="page_width">58</field> <!-- Ancho en mm -->
+        <field name="margin_top">5</field>
+        <field name="margin_bottom">5</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="orientation">Portrait</field>
+    </record>
+      <record id="sale_order_ticket_report" model="ir.actions.report">
+        <field name="name">Sale Order Ticket</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">morato_sale_order_mobile_custom.sale_order_ticket_template</field>
+        <field name="paperformat_id" ref="morato_sale_order_mobile_custom.paperformat_ticket_58mm"/>
+    </record>
+   <template id="sale_order_ticket_template">
+        <t t-name="morato_sale_order_mobile_custom.sale_order_ticket_template">
+            <main style="width: 58mm; margin: 0; padding: 0; box-sizing: border-box;">
+                <t t-foreach="docs" t-as="doc">
+                    <div style="font-family: monospace; font-size: 12px; width: 100%;">
+                        <p style="text-align: center;">*** TICKET DE VENTA ***</p>
+                        <p>Pedido: <t t-esc="doc.name"/></p>
+                        <p>Cliente: <t t-esc="doc.partner_id.name"/></p>
+                        <p>Fecha: <t t-esc="doc.date_order.strftime('%d/%m/%Y %H:%M')"/></p>
+                        <t t-foreach="doc.order_line" t-as="line">
+                            <p><t t-esc="line.product_id.name"/> - <t t-esc="line.product_uom_qty"/> x <t t-esc="line.price_unit"/>€</p>
+                        </t>
+                        <hr/>
+                        <p><strong>Total: <t t-esc="doc.amount_total"/> €</strong></p>
+                        <p style="text-align: center;">Gracias por su compra</p>
+                    </div>
+                </t>
+            </main>
+        </t>
+    </template>
+</odoo>

@@ -20,11 +20,15 @@
         'partner_delivery_zone',
     ],
     'data': [
+        # 'reports/sale_order_ticket_template.xml',
         'views/sale_order_views.xml',
+
     ],
     'assets': {
         'web.assets_backend': [
-            'morato_sale_order_mobile_custom/static/src/scss/sale_portal.scss',
+            'morato_sale_order_mobile_custom/static/src/xml/sale_ticket_dynamic.xml',
+            'morato_sale_order_mobile_custom/static/src/js/sale_ticket_widget.js',
+            # 'morato_sale_order_mobile_custom/static/src/scss/sale_portal.scss',
             ]
     },
     'installable': True,
