@@ -38,11 +38,19 @@
                             class="btn btn-primary"
                             invisible="state in ['sale', 'done', 'cancel']"
                     />
-                <button name="%(action_sale_ticket_client)d"
-        type="action"
-        string="Ver Ticket"
-        class="btn btn-secondary"
-        context="{'order_id': id}"/>
+                    <button name="%(action_sale_ticket_client)d"
+                            type="action"
+                            string="Ver Ticket"
+                            class="btn btn-secondary"
+                            context="{'order_id': id}"
+                            invisible="state not in ['sale', 'done']"/>
+
+                    <!-- Botón Ver Factura - solo si hay facturas -->
+                    <button name="action_view_invoice"
+                            type="object"
+                            string="Ver Factura"
+                            class="btn btn-info"
+                            invisible="not invoice_ids"/>
 
                 </div>
             </xpath>

@@ -1,20 +1,20 @@
 <odoo>
-    <template t-name="morato_sale_order_mobile_custom.sale_order_ticket_template" owl="1">
-        <div class="o_sale_ticket_container">
+    <template t-name="morato_sale_order_mobile_custom.invoice_ticket_template" owl="1">
+        <div class="o_invoice_ticket_container">
             <t t-if="state.docs">
                 <t t-foreach="state.docs" t-as="o" t-key="o.id">
                     <div style="width: 58mm; font-family: monospace; font-size:12px; text-align: center; margin: 0 auto;">
-                        <p style="text-align: center; margin: 3px 0;">*** TICKET DE VENTA ***</p>
-                        <p style="text-align: center; margin: 3px 0;">Pedido:
+                        <p style="text-align: center; margin: 3px 0;">*** TICKET DE FACTURA ***</p>
+                        <p style="text-align: center; margin: 3px 0;">Factura:
                             <t t-esc="o.name"/>
                         </p>
                         <p style="text-align: center; margin: 3px 0;">Cliente:
                             <t t-esc="o.partner_id[1]"/>
                         </p> <!-- partner_id es array [id, name] -->
                         <p style="text-align: center; margin: 3px 0;">Fecha:
-                            <t t-esc="o.date_order"/>
+                            <t t-esc="o.invoice_date"/>
                         </p>
-                        <t t-foreach="o.order_line" t-as="l" t-key="l.id">
+                        <t t-foreach="o.invoice_line_ids" t-as="l" t-key="l.id">
                             <!-- Encabezado de tabla (solo en la primera línea) -->
                             <div t-if="l_first" style="display: flex; justify-content: space-between; margin: 5px 0 3px 0; font-size: 9px; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px;">
                                 <span style="width: 45%; text-align: left;">PRODUCTO</span>
@@ -27,11 +27,11 @@
                             <div style="display: flex; justify-content: space-between; margin: 1px 0; font-size: 9px; line-height: 1.1;">
                                 <!-- Producto - permitir múltiples líneas -->
                                 <span style="width: 45%; text-align: left; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; line-height: 1.2;">
-                                    <t t-esc="l.product_id[1]"/>
+                                    <t t-esc="l.product_id and l.product_id[1] or l.name"/>
                                 </span>
                                 <!-- Cantidad -->
                                 <span style="width: 15%; text-align: center; align-self: flex-start;">
-                                    <t t-esc="l.product_uom_qty"/>
+                                    <t t-esc="l.quantity"/>
                                 </span>
                                 <!-- Precio unitario -->
                                 <span style="width: 20%; text-align: center; align-self: flex-start;">
