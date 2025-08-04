@@ -64,7 +64,7 @@ class SaleOrderTicketController(http.Controller):
 
         # Título
         p.setFont(font_name, font_size + 2)
-        y_position = draw_text("*** TICKET DE VENTA ***", y_position)
+        y_position = draw_text("*** PEDIDO DE VENTA ***", y_position)
         y_position -= 5
 
         # Información del pedido - centrada
@@ -272,7 +272,7 @@ class SaleOrderTicketController(http.Controller):
 
         # Título
         p.setFont(font_name, font_size + 2)
-        y_position = draw_text("*** TICKET DE FACTURA ***", y_position)
+        y_position = draw_text("*** FACTURA ***", y_position)
         y_position -= 5
 
         # Información de la factura - centrada
