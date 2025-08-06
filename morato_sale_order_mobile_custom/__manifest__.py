@@ -10,6 +10,7 @@
         - Incluye impresión de albarán en formato ticket de 58mm como POS
         - Usa controlador web para generar HTML puro (no PDF)
         - Funcionalidad de tickets también para facturas
+        - Inputs para cajas y unidades por caja en catálogo de productos
     """,
     'author': 'Morato',
     'category': 'Sales',
@@ -20,6 +21,7 @@
         'web',
         'account',
         'partner_delivery_zone',
+        'product',
     ],
     'external_dependencies': {
         'python': ['reportlab'],
@@ -33,8 +35,10 @@
         'web.assets_backend': [
             'morato_sale_order_mobile_custom/static/src/xml/sale_ticket_dynamic.xml',
             'morato_sale_order_mobile_custom/static/src/xml/invoice_ticket_template.xml',
+            'morato_sale_order_mobile_custom/static/src/xml/product_catalog_order_line.xml',
             'morato_sale_order_mobile_custom/static/src/js/sale_ticket_widget.js',
             'morato_sale_order_mobile_custom/static/src/js/invoice_ticket_widget.js',
+            'morato_sale_order_mobile_custom/static/src/js/product_catalog_order_line.js',
             # 'morato_sale_order_mobile_custom/static/src/scss/sale_portal.scss',
             ]
     },
