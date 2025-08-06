@@ -10,6 +10,7 @@ class SaleOrder(models.Model):
             'url': f'/sale_order/{self.id}/ticket',
             'target': 'new',
         }
+
     def action_mobile_custom(self):
         """Acción personalizada para móvil que confirma el pedido, valida la entrega y crea la factura"""
         # 1. Confirmar el pedido si está en borrador
