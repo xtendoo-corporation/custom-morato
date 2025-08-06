@@ -15,7 +15,7 @@
                                     type="button">
                                 <i class="fa fa-minus"/>
                             </button>
-                            <input class="form-control text-center"
+                            <input class="o_input form-control border text-center text-bg-light"
                                    type="number"
                                    min="0"
                                    t-att-value="boxes || 0"
@@ -31,7 +31,7 @@
                     <!-- Input para Unidades por Caja -->
                     <div class="col-6">
                         <label class="form-label text-muted small mb-1">Uds/Caja</label>
-                        <input class="form-control form-control-sm text-center"
+                        <input class="o_input form-control border text-center text-bg-light"
                                type="number"
                                min="1"
                                t-att-value="unitsPerBox || 1"
