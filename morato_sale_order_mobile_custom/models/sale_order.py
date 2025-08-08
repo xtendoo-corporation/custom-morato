@@ -22,9 +22,6 @@ class SaleOrder(models.Model):
             if picking.state in ['confirmed', 'assigned', 'waiting', 'partially_available']:
                 # Marcar todos los productos como entregados (cantidad hecha = cantidad demandada)
                 for move in picking.move_ids:
-                    for move_line in move.move_line_ids:
-                        move_line.quantity = move_line.reserved_quantity or move_line.product_uom_qty
-                    # Si no hay move_lines, crear uno con la cantidad completa
                     if not move.move_line_ids:
                         move.move_line_ids = [(0, 0, {
                             'product_id': move.product_id.id,
