@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Acción cliente para el ticket de factura -->
     <record id="action_invoice_ticket_client" model="ir.actions.client">

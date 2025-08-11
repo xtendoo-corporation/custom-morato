@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
     <t t-name="product.ProductCatalogOrderLine" t-inherit="product.ProductCatalogOrderLine" t-inherit-mode="extension">
         <!-- Añadir inputs para cajas y unidades por caja al final del componente -->
@@ -7,10 +6,9 @@
             <div t-if="isInOrder()" class="m-2 pt-2 border-top">
                 <div class="row g-2">
                     <!-- Input para Cajas -->
-                    <div class="col-6">
                         <label class="form-label text-muted small mb-1">Cajas</label>
                         <div class="input-group input-group-sm">
-                            <button class="btn btn-outline-secondary"
+                            <button class="btn btn-primary border"
                                     t-on-click.stop="decreaseBoxes"
                                     type="button">
                                 <i class="fa fa-minus"/>
@@ -21,28 +19,32 @@
                                    t-att-value="boxes || 0"
                                    t-on-change="setBoxes"
                                    placeholder="0"/>
-                            <button class="btn btn-outline-secondary"
+                            <button class="btn btn-primary border"
                                     t-on-click.stop="increaseBoxes"
                                     type="button">
                                 <i class="fa fa-plus"/>
                             </button>
                         </div>
-                    </div>
                     <!-- Input para Unidades por Caja -->
-                    <div class="col-6">
                         <label class="form-label text-muted small mb-1">Uds/Caja</label>
-                        <input class="o_input form-control border text-center text-bg-light"
-                               type="number"
-                               min="1"
-                               t-att-value="unitsPerBox || 1"
-                               t-on-change="setUnitsPerBox"
-                               placeholder="1"/>
-                    </div>
-                </div>
-                <!-- Mostrar cálculo total -->
-                <div class="mt-2 text-muted small text-center" t-if="boxes and unitsPerBox">
-                    <i class="fa fa-calculator me-1"/>
-                    Total calculado: <strong t-out="(boxes || 0) * (unitsPerBox || 1)"/> unidades
+                        <div class="input-group input-group-sm">
+                            <button class="btn btn-primary border"
+                                    t-on-click.stop="decreaseUnitsPerBox"
+                                    type="button">
+                                <i class="fa fa-minus"/>
+                            </button>
+                            <input class="o_input form-control border text-center text-bg-light"
+                                   type="number"
+                                   min="1"
+                                   t-att-value="unitsPerBox || 1"
+                                   t-on-change="setUnitsPerBox"
+                                   placeholder="1"/>
+                            <button class="btn btn-primary border"
+                                    t-on-click.stop="increaseUnitsPerBox"
+                                    type="button">
+                                <i class="fa fa-plus"/>
+                            </button>
+                        </div>
                 </div>
 
                 <!-- Controles de cantidad en línea -->

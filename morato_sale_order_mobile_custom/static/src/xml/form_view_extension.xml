@@ -1,0 +1,48 @@
+<templates xml:space="preserve">
+    <!-- Plantilla para los botones personalizados de pedidos de venta -->
+    <t t-name="morato_sale_order_mobile_custom.SaleOrderButtons">
+        <t t-if="env.model?.root?.resModel === 'sale.order'">
+            <div class="d-flex gap-2 ms-3 custom-sale-buttons">
+                <!-- Botón Ver Ticket - solo si el pedido está confirmado -->
+                <button
+                    t-if="env.model.root.data.state === 'sale' || env.model.root.data.state === 'done'"
+                    type="button"
+                    class="btn btn-secondary"
+                    t-on-click="() => {
+                        env.services.action.doAction({
+                            type: 'ir.actions.client',
+                            tag: 'sale_ticket_pos',
+                            target: 'new',
+                            context: {'order_id': env.model.root.resId}
+                        });
+                    }">
+                    <i class="fa fa-print"/> Ticket
+                </button>
+
+                <!-- Botón Ver Factura - solo si hay facturas -->
+                <button
+                    t-if="env.model.root.data.invoice_ids?.length"
+                    type="button"
+                    class="btn btn-info"
+                    t-on-click="() => {
+                        env.services.action.doAction({
+                            type: 'object',
+                            name: 'action_view_invoice',
+                            resModel: 'sale.order',
+                            resId: env.model.root.resId
+                        });
+                    }">
+                    <i class="fa fa-file-text"/> Factura
+                </button>
+            </div>
+        </t>
+    </t>
+
+    <!-- Extender la plantilla FormView para añadir contenido después de layout-actions -->
+    <t t-name="morato_sale_order_mobile_custom.FormView" t-inherit="web.FormView" t-inherit-mode="extension">
+        <xpath expr="//t[@t-set-slot='layout-actions']" position="after">
+            <!-- Llamar a la plantilla de botones personalizada -->
+            <t t-call="morato_sale_order_mobile_custom.SaleOrderButtons"/>
+        </xpath>
+    </t>
+</templates>

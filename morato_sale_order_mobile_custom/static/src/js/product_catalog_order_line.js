@@ -132,6 +132,18 @@ patch(ProductCatalogOrderLine.prototype, {
         this.updateQuantityFromBoxes();
     },
 
+    decreaseUnitsPerBox() {
+        if (this.boxState.unitsPerBox > 1) {
+            this.boxState.unitsPerBox--;
+            this.updateQuantityFromBoxes();
+        }
+    },
+
+    increaseUnitsPerBox() {
+        this.boxState.unitsPerBox++;
+        this.updateQuantityFromBoxes();
+    },
+
     setUnitsPerBox(ev) {
         const value = parseInt(ev.target.value) || 1;
         this.boxState.unitsPerBox = Math.max(1, value);
