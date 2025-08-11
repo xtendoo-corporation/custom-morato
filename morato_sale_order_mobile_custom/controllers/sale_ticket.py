@@ -63,8 +63,8 @@ class SaleOrderTicketController(http.Controller):
             return y_pos - line_height
 
         # Título
-        p.setFont(font_name, font_size + 2)
-        y_position = draw_text("*** PEDIDO DE VENTA ***", y_position)
+        # p.setFont(font_name, font_size + 2)
+        # y_position = draw_text("*** PEDIDO DE VENTA ***", y_position)
         y_position -= 5
 
         # Información del pedido - centrada
@@ -82,8 +82,8 @@ class SaleOrderTicketController(http.Controller):
 
             # Dibujar encabezados
             p.drawString(margin, header_y, "PRODUCTO")
-            p.drawString(margin + 25*mm, header_y, "QTY")
-            p.drawString(margin + 35*mm, header_y, "P.Ud")
+            p.drawString(margin + 25*mm, header_y, "UND")
+            p.drawString(margin + 35*mm, header_y, "PRECIO")
             p.drawString(margin + 46*mm, header_y, "TOTAL")
 
             # Línea bajo los encabezados
@@ -127,12 +127,12 @@ class SaleOrderTicketController(http.Controller):
                 # Columna 2: Cantidad (alineada con la primera línea del producto)
                 qty_text = f"{line.product_uom_qty}"
                 qty_width = p.stringWidth(qty_text, font_name, font_size - 2)
-                p.drawString(margin + 27*mm - qty_width/2, first_line_y, qty_text)
+                p.drawString(margin + 27 * mm - qty_width / 2, first_line_y, qty_text)
 
                 # Columna 3: Precio unitario (alineada con la primera línea del producto)
                 price_text = f"{line.price_unit:.2f}€"
                 price_width = p.stringWidth(price_text, font_name, font_size - 2)
-                p.drawString(margin + 38*mm - price_width/2, first_line_y, price_text)
+                p.drawString(margin + 38 * mm - price_width / 2, first_line_y, price_text)
 
                 # Columna 4: Total (alineada con la primera línea del producto)
                 subtotal = line.product_uom_qty * line.price_unit
@@ -272,7 +272,7 @@ class SaleOrderTicketController(http.Controller):
 
         # Título
         p.setFont(font_name, font_size + 2)
-        y_position = draw_text("*** FACTURA ***", y_position)
+        # y_position = draw_text("*** FACTURA ***", y_position)
         y_position -= 5
 
         # Información de la factura - centrada
@@ -299,8 +299,8 @@ class SaleOrderTicketController(http.Controller):
 
                 # Dibujar encabezados
                 p.drawString(margin, header_y, "PRODUCTO")
-                p.drawString(margin + 25*mm, header_y, "QTY")
-                p.drawString(margin + 35*mm, header_y, "P.Ud")
+                p.drawString(margin + 25*mm, header_y, "UND")
+                p.drawString(margin + 35*mm, header_y, "PRECIO")
                 p.drawString(margin + 46*mm, header_y, "TOTAL")
 
                 # Línea bajo los encabezados

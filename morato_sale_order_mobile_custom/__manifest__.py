@@ -22,6 +22,7 @@
         'account',
         'partner_delivery_zone',
         'product',
+        'xtendoo_product_box_units',
     ],
     'external_dependencies': {
         'python': ['reportlab'],
