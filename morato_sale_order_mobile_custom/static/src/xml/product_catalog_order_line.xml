@@ -25,6 +25,7 @@
                                 <i class="fa fa-plus"/>
                             </button>
                         </div>
+
                     <!-- Input para Unidades por Caja -->
                         <label class="form-label text-muted small mb-1">Uds/Caja</label>
                         <div class="input-group input-group-sm">
@@ -46,7 +47,7 @@
                             </button>
                         </div>
                 </div>
-
+                <label class="form-label text-muted small mb-1">Total unidades</label>
                 <!-- Controles de cantidad en línea -->
                 <div class="input-group input-group-sm mt-2">
                     <button class="btn btn-primary border"
