@@ -1,15 +1,50 @@
 @media (max-width: 767px) {
-  .o_mobile_hide,
+  /* Ocultar campos con clase o_mobile_hide */
+  .o_mobile_hide {
+    display: none !important;
+  }
+
+  /* Ocultar etiquetas asociadas a campos con clase o_mobile_hide */
+  /* Caso 1: Etiqueta sigue al campo oculto */
   .o_mobile_hide ~ .o_form_label,
   .o_mobile_hide ~ .o_td_label,
+  .o_mobile_hide ~ label {
+    display: none !important;
+  }
+
+  /* Caso 2: Etiqueta precede al campo oculto */
   .o_form_label:has(+ .o_mobile_hide),
   .o_td_label:has(+ .o_mobile_hide),
-  label:has(+ .o_mobile_hide),
-  .o_form_label,
-  .o_td_label {
+  label:has(+ .o_mobile_hide) {
+    display: none !important;
+  }
+
+  /* Caso 3: Etiqueta está directamente relacionada con el campo por el atributo for */
+  label[for]:has(+ .o_td_field .o_mobile_hide),
+  .o_td_label:has(> label[for]):has(+ .o_td_field .o_mobile_hide) {
+    display: none !important;
+  }
+
+  /* Caso 4: Estructura específica de Odoo para campos y etiquetas */
+  .o_group > tbody > tr > .o_td_label:has(+ .o_td_field .o_mobile_hide),
+  .o_td_label:has(+ .o_td_field:has(.o_mobile_hide)) {
+    display: none !important;
+  }
+
+  /* Caso 5: Para estructuras de formulario donde la etiqueta está en otra fila/columna */
+  .o_group tr:has(.o_mobile_hide) .o_td_label,
+  div.o_field_widget.o_mobile_hide + .o_td_label,
+  .o_td_label + div:has(.o_field_widget.o_mobile_hide) {
+    display: none !important;
+  }
+
+  /* Caso 6: Para campos dentro de un grupo con layout específico */
+  .o_group:has(.o_mobile_hide) .o_form_label[for],
+  .o_inner_group:has(.o_mobile_hide) .o_form_label[for] {
     display: none !important;
   }
 }
+
 @media (min-width: 768px) {
   .o_mobile_only {
     display: none !important;

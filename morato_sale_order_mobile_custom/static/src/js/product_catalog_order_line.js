@@ -36,6 +36,12 @@ patch(ProductCatalogOrderLine.prototype, {
                         // Si box_units está en el catálogo, usarlo directamente
                         if (record.data.box_units) {
                             this.boxState.unitsPerBox = record.data.box_units;
+
+                            // Si el producto ya está en el pedido, calcular las cajas
+                            if (this.isInOrder()) {
+                                this.calculateBoxesFromQuantity();
+                            }
+
                             return;
                         }
                         break;
@@ -56,10 +62,22 @@ patch(ProductCatalogOrderLine.prototype, {
                         const boxUnits = result[0].box_units;
                         if (boxUnits && boxUnits > 0) {
                             this.boxState.unitsPerBox = boxUnits;
+
+                            // Si el producto ya está en el pedido, calcular las cajas
+                            if (this.isInOrder()) {
+                                this.calculateBoxesFromQuantity();
+                            }
+
                             return;
                         } else {
                             // Campo existe pero es 0, false, null - usar valor por defecto
                             this.boxState.unitsPerBox = 1;
+
+                            // Si el producto ya está en el pedido, calcular las cajas
+                            if (this.isInOrder()) {
+                                this.calculateBoxesFromQuantity();
+                            }
+
                             return;
                         }
                     }
@@ -79,9 +97,21 @@ patch(ProductCatalogOrderLine.prototype, {
                         const boxUnits = result[0].box_units;
                         if (boxUnits && boxUnits > 0) {
                             this.boxState.unitsPerBox = boxUnits;
+
+                            // Si el producto ya está en el pedido, calcular las cajas
+                            if (this.isInOrder()) {
+                                this.calculateBoxesFromQuantity();
+                            }
+
                             return;
                         } else {
                             this.boxState.unitsPerBox = 1;
+
+                            // Si el producto ya está en el pedido, calcular las cajas
+                            if (this.isInOrder()) {
+                                this.calculateBoxesFromQuantity();
+                            }
+
                             return;
                         }
                     }
@@ -92,6 +122,18 @@ patch(ProductCatalogOrderLine.prototype, {
 
         } catch (error) {
             // En caso de cualquier error, usar valor por defecto
+        }
+
+        // Si el producto ya está en el pedido, calcular las cajas incluso con los valores por defecto
+        if (this.isInOrder()) {
+            this.calculateBoxesFromQuantity();
+        }
+    },
+
+    // Método para calcular el número de cajas a partir de la cantidad total
+    calculateBoxesFromQuantity() {
+        if (this.quantity && this.boxState.unitsPerBox && this.boxState.unitsPerBox > 0) {
+            this.boxState.boxes = Math.floor(this.quantity / this.boxState.unitsPerBox);
         }
     },
 

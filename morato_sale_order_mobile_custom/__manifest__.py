@@ -20,7 +20,6 @@
         'stock',
         'web',
         'account',
-        'partner_delivery_zone',
         'product',
         'xtendoo_product_box_units',
     ],
@@ -42,7 +41,7 @@
             'morato_sale_order_mobile_custom/static/src/js/product_catalog_order_line.js',
             # 'morato_sale_order_mobile_custom/static/src/js/sale_order_buttons.js',
             # 'morato_sale_order_mobile_custom/static/src/xml/form_view_extension.xml',
-            # 'morato_sale_order_mobile_custom/static/src/scss/sale_portal.scss',
+            'morato_sale_order_mobile_custom/static/src/scss/sale_portal.scss',
             ]
     },
     'installable': True,
