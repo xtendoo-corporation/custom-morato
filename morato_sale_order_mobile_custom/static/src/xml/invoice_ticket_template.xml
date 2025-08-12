@@ -1,6 +1,6 @@
 <odoo>
     <template t-name="morato_sale_order_mobile_custom.invoice_ticket_template" owl="1">
-        <div class="o_invoice_ticket_container">
+        <div class="o_invoice_ticket_container" >
             <t t-if="state.docs">
                 <t t-foreach="state.docs" t-as="o" t-key="o.id">
                     <div style="width: 58mm; font-family: monospace; font-size:12px; text-align: center; margin: 0 auto;">

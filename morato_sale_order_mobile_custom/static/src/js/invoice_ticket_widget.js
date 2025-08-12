@@ -7,10 +7,10 @@ import { rpc } from "@web/core/network/rpc";
 export class InvoiceTicketWidget extends Component {
     setup() {
         this.state = useState({ docs: null });
-        console.log("Props al montar componente de factura:", this.props);
+        console.log("Props al montar componente:", this.props);
         onMounted(() => this.renderTicket());
         console.log("Contexto en env:", this.env.context);
-        console.log("Props recibidos en factura:", this.props);
+        console.log("Props recibidos:", this.props);
     }
 
     async renderTicket() {
@@ -34,8 +34,7 @@ export class InvoiceTicketWidget extends Component {
 
         console.log("Factura leída:", invoice);
 
-        // Leer todas las líneas de factura primero
-        const all_invoice_lines = await rpc("/web/dataset/call_kw", {
+        const invoice_lines = await rpc("/web/dataset/call_kw", {
             model: "account.move.line",
             method: "read",
             args: [invoice.invoice_line_ids],
@@ -44,52 +43,26 @@ export class InvoiceTicketWidget extends Component {
             },
         });
 
-        console.log("Todas las líneas de factura leídas:", all_invoice_lines);
+        console.log("Líneas de factura leídas:", invoice_lines);
 
-        // Analizar cada línea para depuración
-        all_invoice_lines.forEach((line, index) => {
-            console.log(`Línea ${index}:`, {
-                name: line.name,
-                product_id: line.product_id,
-                quantity: line.quantity,
-                display_type: line.display_type,
-                price_unit: line.price_unit
-            });
-        });
-
-        // Filtrar solo las líneas de productos - corregir la lógica de display_type
-        const product_lines = all_invoice_lines.filter(line => {
-            // En Odoo, display_type 'product' significa que ES un producto válido
-            // Solo excluir 'line_section' y 'line_note'
+        // Filtrar solo las líneas de productos
+        const product_lines = invoice_lines.filter(line => {
             const isValidProduct = !line.display_type || line.display_type === 'product';
             const hasContent = line.name && line.name.trim() !== '';
-
-            console.log(`Evaluando línea "${line.name}":`, {
-                display_type: line.display_type,
-                quantity: line.quantity,
-                price_unit: line.price_unit,
-                product_id: line.product_id,
-                isValidProduct,
-                hasContent,
-                willInclude: isValidProduct && hasContent
-            });
-
             return isValidProduct && hasContent;
         });
-
-        console.log("Líneas de productos filtradas:", product_lines);
 
         invoice.invoice_line_ids = product_lines;
         this.state.docs = [invoice];
 
-        console.log("Estado actualizado con docs de factura:", this.state.docs);
+        console.log("Estado actualizado con docs:", this.state.docs);
 
         // Generar PDF automáticamente después de cargar los datos
         setTimeout(() => this.generatePDF(), 500);
     }
 
     async generatePDF() {
-        console.log("Generando PDF del ticket de factura...");
+        console.log("Generando PDF del ticket...");
 
         try {
             const invoice_id = this.props.action?.context?.invoice_id;
@@ -120,7 +93,7 @@ export class InvoiceTicketWidget extends Component {
                     document.body.removeChild(a);
                 }, 100);
 
-                console.log("PDF de factura descargado exitosamente");
+                console.log("PDF descargado exitosamente");
 
                 // Cerrar la ventana automáticamente después de la descarga
                 setTimeout(() => {
@@ -130,22 +103,22 @@ export class InvoiceTicketWidget extends Component {
                 }, 500);
 
             } else {
-                console.error("Error al generar PDF de factura:", response.statusText);
+                console.error("Error al generar PDF:", response.statusText);
                 // Fallback a impresión normal si falla
                 this.onPrint();
             }
         } catch (error) {
-            console.error("Error al generar PDF de factura:", error);
+            console.error("Error al generar PDF:", error);
             // Fallback a impresión normal si falla
             this.onPrint();
         }
     }
 
     onPrint() {
-        console.log("Llamada a imprimir ticket de factura");
+        console.log("Llamada a imprimir ticket");
 
-        // Obtener el contenido del ticket
-        const ticketContent = this.el.querySelector('div[style*="width: 58mm"]');
+        // Usar document.querySelector directamente sin depender de this.el
+        const ticketContent = document.querySelector('div[style*="width: 58mm"]');
 
         if (!ticketContent) {
             console.warn("No se encontró el contenido del ticket para imprimir");

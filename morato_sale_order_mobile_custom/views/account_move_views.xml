@@ -18,10 +18,11 @@
                      invisible="move_type != 'out_invoice'">
                     <button name="%(action_invoice_ticket_client)d"
                             type="action"
-                            string="Ver Ticket"
                             class="btn btn-secondary"
                             context="{'invoice_id': id}"
-                            invisible="state != 'posted'"/>
+                            invisible="state != 'posted'">
+                    <i class="fa fa-print" title="Ver Ticket"/>
+                    </button>
                 </div>
             </xpath>
         </field>
