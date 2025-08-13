@@ -5,6 +5,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from io import BytesIO
+import os
+from reportlab.lib.utils import ImageReader
 
 class SaleOrderTicketController(http.Controller):
 
@@ -43,14 +45,13 @@ class SaleOrderTicketController(http.Controller):
             return f"{value:.2f}".replace(".", ",")
 
         # Calcular altura necesaria dinámicamente
-        # Añadir líneas para la información de la empresa
         company_lines = 5  # Nombre, dirección, NIF, teléfono, etc.
         base_lines = 8  # Título, pedido, cliente, fecha, total, mensaje final, espacios
         product_lines = len(order.order_line) * 2  # 2 líneas por producto (nombre + cantidad/precio)
         separators = 4  # Espacios adicionales y separadores (uno más para separar la info de empresa)
 
         total_lines = company_lines + base_lines + product_lines + separators
-        page_height = (total_lines * line_height) + (20 * mm)  # Margen superior e inferior
+        page_height = (total_lines * line_height) + (20 * mm)
 
         # Altura mínima para evitar tickets muy pequeños
         min_height = 80 * mm
@@ -100,6 +101,9 @@ class SaleOrderTicketController(http.Controller):
         y_position = draw_text(f"Pedido: {order.name}", y_position)
         y_position = draw_text(f"Cliente: {order.partner_id.name}", y_position)
         y_position = draw_text(f"Fecha: {order.date_order.strftime('%d/%m/%Y %H:%M')}", y_position)
+        y_position -= 5
+        # Línea separadora debajo de la información del pedido
+        p.line(margin, y_position + 3, page_width - margin, y_position + 3)
         y_position -= 5
 
         # Líneas del pedido - con formato de tabla
@@ -151,7 +155,7 @@ class SaleOrderTicketController(http.Controller):
 
                 # Precio total a la derecha (alineado con la primera línea del producto)
                 p.setFont(font_name, font_size)
-                subtotal = line.product_uom_qty * line.price_unit
+                subtotal = line.price_subtotal
                 total_text = f"{format_decimal(subtotal)}€"
                 total_width = p.stringWidth(total_text, font_name, font_size)
                 p.drawString(page_width - margin - total_width, y_position, total_text)
