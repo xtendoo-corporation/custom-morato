@@ -98,8 +98,32 @@ class SaleOrderTicketController(http.Controller):
 
         # Información del pedido - alineada a la izquierda como antes
         p.setFont(font_name, font_size)
+        # --- NOMBRE DEL CLIENTE EN DOS LÍNEAS SI ES LARGO ---
+        cliente_label = f"Cliente: "
+        cliente_name = order.partner_id.name or ''
+        max_cliente_width = page_width - 2 * margin - p.stringWidth(cliente_label, font_name, font_size)
+        cliente_lines = []
+        if p.stringWidth(cliente_name, font_name, font_size) > max_cliente_width:
+            # Dividir el nombre del cliente en varias líneas si es necesario
+            words = cliente_name.split(' ')
+            current_line = ''
+            for word in words:
+                if p.stringWidth(current_line + word + ' ', font_name, font_size) <= max_cliente_width:
+                    current_line += word + ' '
+                else:
+                    if current_line:
+                        cliente_lines.append(current_line.strip())
+                    current_line = word + ' '
+            if current_line:
+                cliente_lines.append(current_line.strip())
+        else:
+            cliente_lines = [cliente_name]
+        # Dibujar la primera línea con la etiqueta
         y_position = draw_text(f"Pedido: {order.name}", y_position)
-        y_position = draw_text(f"Cliente: {order.partner_id.name}", y_position)
+        y_position = draw_text(f"{cliente_label}{cliente_lines[0]}", y_position)
+        # Dibujar líneas adicionales del nombre del cliente (sin la etiqueta y sin tanto espacio inicial)
+        for extra_line in cliente_lines[1:]:
+            y_position = draw_text(f"{extra_line}", y_position)
         y_position = draw_text(f"Fecha: {order.date_order.strftime('%d/%m/%Y %H:%M')}", y_position)
         y_position -= 5
         # Línea separadora debajo de la información del pedido
@@ -162,6 +186,9 @@ class SaleOrderTicketController(http.Controller):
 
                 # Cantidad x Precio debajo del nombre del producto
                 qty_price_text = f"{int(line.product_uom_qty) if line.product_uom_qty == int(line.product_uom_qty) else format_decimal(line.product_uom_qty)} x {format_decimal(line.price_unit)}€"
+                # Si hay descuento, añadirlo al texto
+                if line.discount:
+                    qty_price_text += f"  (-{format_decimal(line.discount)}%)"
                 qty_price_y = first_line_y - (line_height - 1)
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
@@ -310,9 +337,30 @@ class SaleOrderTicketController(http.Controller):
 
         # Información de la factura - alineada a la izquierda como en el ticket de venta
         p.setFont(font_name, font_size)
+        # --- NOMBRE DEL CLIENTE EN VARIAS LÍNEAS SI ES LARGO ---
+        cliente_label = f"Cliente: "
+        cliente_name = partner.name or ''
+        max_cliente_width = page_width - 2 * margin - p.stringWidth(cliente_label, font_name, font_size)
+        cliente_lines = []
+        if p.stringWidth(cliente_name, font_name, font_size) > max_cliente_width:
+            # Dividir el nombre del cliente en varias líneas si es necesario
+            words = cliente_name.split(' ')
+            current_line = ''
+            for word in words:
+                if p.stringWidth(current_line + word + ' ', font_name, font_size) <= max_cliente_width:
+                    current_line += word + ' '
+                else:
+                    if current_line:
+                        cliente_lines.append(current_line.strip())
+                    current_line = word + ' '
+            if current_line:
+                cliente_lines.append(current_line.strip())
+        else:
+            cliente_lines = [cliente_name]
         y_position = draw_text(f"Factura: {invoice.name}", y_position)
-        y_position = draw_text(f"Cliente: {partner.name}", y_position)
-
+        y_position = draw_text(f"{cliente_label}{cliente_lines[0]}", y_position)
+        for extra_line in cliente_lines[1:]:
+            y_position = draw_text(f"{extra_line}", y_position)
         # Información adicional del cliente
         if partner.vat:
             y_position = draw_text(f"NIF: {partner.vat}", y_position)
@@ -327,7 +375,6 @@ class SaleOrderTicketController(http.Controller):
             y_position = draw_text(f"Población: {address.strip()}", y_position)
         if partner.phone:
             y_position = draw_text(f"Teléfono: {partner.phone}", y_position)
-
         y_position = draw_text(f"Fecha: {invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else 'N/A'}", y_position)
 
         # Separador entre los datos del cliente y los productos
@@ -394,6 +441,9 @@ class SaleOrderTicketController(http.Controller):
                 price = line.price_unit or 0
                 qty_text = int(qty) if qty == int(qty) else format_decimal(qty)
                 qty_price_text = f"{qty_text} x {format_decimal(price)}€"
+                # Mostrar descuento si existe
+                if getattr(line, 'discount', 0):
+                    qty_price_text += f"  (-{format_decimal(line.discount)}%)"
                 qty_price_y = first_line_y - (line_height - 1)
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
@@ -421,22 +471,30 @@ class SaleOrderTicketController(http.Controller):
         p.drawString(page_width - margin - base_text_width, y_position, base_text)
         y_position -= line_height
 
-        # Agrupar impuestos por tipo de IVA
+        # Agrupar impuestos por tipo de IVA y calcular base imponible por cada tipo
         tax_groups = {}
-
-        # En Odoo 18, tax_line_ids ya no existe, usamos la estructura actual
+        base_groups = {}
         for line in valid_product_lines:
+            line_base = line.price_subtotal or 0.0
             for tax in line.tax_ids:
                 tax_rate = tax.amount
-                tax_amount = line.price_subtotal * (tax_rate / 100)
+                tax_amount = line_base * (tax_rate / 100)
                 if tax_rate in tax_groups:
                     tax_groups[tax_rate] += tax_amount
+                    base_groups[tax_rate] += line_base
                 else:
                     tax_groups[tax_rate] = tax_amount
+                    base_groups[tax_rate] = line_base
 
-        # Mostrar cada tipo de IVA - alineado a la derecha
-        for tax_rate, tax_amount in tax_groups.items():
-            tax_text = f"IVA {format_decimal(tax_rate)}%: {format_decimal(tax_amount)}€"
+        # Mostrar primero todas las bases imponibles por tipo de IVA
+        for tax_rate in sorted(base_groups.keys()):
+            base_text = f"Base {format_decimal(tax_rate)}%: {format_decimal(base_groups[tax_rate])}€"
+            base_text_width = p.stringWidth(base_text, font_name, font_size)
+            p.drawString(page_width - margin - base_text_width, y_position, base_text)
+            y_position -= line_height
+        # Luego mostrar todos los importes de IVA por tipo
+        for tax_rate in sorted(tax_groups.keys()):
+            tax_text = f"IVA {format_decimal(tax_rate)}%: {format_decimal(tax_groups[tax_rate])}€"
             tax_text_width = p.stringWidth(tax_text, font_name, font_size)
             p.drawString(page_width - margin - tax_text_width, y_position, tax_text)
             y_position -= line_height
@@ -450,12 +508,12 @@ class SaleOrderTicketController(http.Controller):
         total_text_width = p.stringWidth(total_text, font_name, font_size + 2)
         p.drawString(page_width - margin - total_text_width, y_position, total_text)
 
-        # Aumentamos la separación antes del mensaje final
-        y_position -= 15  # Aumentado de 10 a 15 para mayor separación
+        # Más espacio debajo del total
+        y_position -= 25  # Aumenta la separación visual
 
-        # Mensaje final - mantener centrado
+        # Mensaje final - siempre debajo del total y centrado
         p.setFont(font_name, font_size)
-        y_position = draw_text("Gracias por su compra", y_position, centered=True)
+        p.drawString((page_width - p.stringWidth("Gracias por su compra", font_name, font_size)) / 2, y_position, "Gracias por su compra")
 
         # Finalizar PDF
         p.showPage()
