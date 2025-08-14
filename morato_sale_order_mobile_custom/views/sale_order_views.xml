@@ -15,23 +15,11 @@
             <xpath expr="//field[@name='payment_term_id']" position="attributes">
                 <attribute name="class">o_mobile_hide</attribute>
             </xpath>
-<!--            <xpath expr="//label[@name='payment_term_id']" position="attributes">-->
-<!--                <attribute name="class">o_mobile_hide</attribute>-->
-<!--            </xpath>-->
-            <!--            <xpath expr="//field[@name='pricelist_id']" position="attributes">-->
-            <!--                <attribute name="class">o_mobile_hide</attribute>-->
-            <!--            </xpath>-->
-            <!--            <xpath expr="//field[@name='date_order']" position="attributes">-->
-            <!--                <attribute name="class">o_mobile_hide</attribute>-->
-            <!--            </xpath>-->
+
             <xpath expr="//field[@name='validity_date']" position="attributes">
                 <attribute name="class">o_mobile_hide</attribute>
             </xpath>
-            <!--            <xpath expr="//field[@name='delivery_zone_id']" position="attributes">-->
-            <!--                <attribute name="class">o_mobile_hide</attribute>-->
-            <!--            </xpath>-->
 
-            <!-- Quitar el campo product_uom_qty de su posición original -->
             <xpath
                 expr="//field[@name='order_line']/list/field[@name='product_uom_qty']"
                 position="replace"

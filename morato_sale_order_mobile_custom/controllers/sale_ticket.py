@@ -203,10 +203,12 @@ class SaleOrderTicketController(http.Controller):
         y_position -= 10
 
 
-        # Total
-        p.setFont(font_name, font_size + 2)  # Tamaño más grande para el total
-        y_position = draw_text(f"Total: {format_decimal(order.amount_total)}€", y_position, centered=True)
-        y_position -= 10
+        # Total alineado a la derecha
+        total_text = f"Total: {format_decimal(order.amount_total)}€"
+        total_width = p.stringWidth(total_text, font_name, font_size + 2)
+        p.setFont(font_name, font_size + 2)
+        p.drawString(page_width - margin - total_width, y_position, total_text)
+        y_position -= 15  # Más espacio debajo del total
 
         # Mensaje final
         p.setFont(font_name, font_size)
@@ -358,24 +360,42 @@ class SaleOrderTicketController(http.Controller):
         else:
             cliente_lines = [cliente_name]
         y_position = draw_text(f"Factura: {invoice.name}", y_position)
-        y_position = draw_text(f"{cliente_label}{cliente_lines[0]}", y_position)
-        for extra_line in cliente_lines[1:]:
-            y_position = draw_text(f"{extra_line}", y_position)
-        # Información adicional del cliente
+        # Mostrar la fecha con etiqueta "Fecha:" antes de los datos del cliente
+        fecha_text = f"Fecha: {invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else 'N/A'}"
+        y_position = draw_text(fecha_text, y_position)
+        # Información del cliente, encabezado "Cliente:" y luego los datos en líneas independientes
+        y_position = draw_text("Cliente:", y_position)
+        cliente_datos = []
+        if partner.name:
+            cliente_datos.append(partner.name)
         if partner.vat:
-            y_position = draw_text(f"NIF: {partner.vat}", y_position)
+            cliente_datos.append(partner.vat)
         if partner.street:
-            y_position = draw_text(f"Dir: {partner.street}", y_position)
+            cliente_datos.append(partner.street)
         if partner.zip or partner.city:
             address = ""
             if partner.zip:
                 address += partner.zip + " "
             if partner.city:
                 address += partner.city
-            y_position = draw_text(f"Población: {address.strip()}", y_position)
+            cliente_datos.append(address.strip())
         if partner.phone:
-            y_position = draw_text(f"Teléfono: {partner.phone}", y_position)
-        y_position = draw_text(f"Fecha: {invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else 'N/A'}", y_position)
+            cliente_datos.append(partner.phone)
+        # Dividir cada dato en varias líneas si es necesario
+        for dato in cliente_datos:
+            max_width = page_width - 2 * margin
+            palabras = dato.split(' ')
+            linea_actual = ""
+            for palabra in palabras:
+                test_line = (linea_actual + palabra + " ").strip()
+                if p.stringWidth(test_line, font_name, font_size) <= max_width:
+                    linea_actual = test_line + " "
+                else:
+                    if linea_actual:
+                        y_position = draw_text(linea_actual.strip(), y_position)
+                    linea_actual = palabra + " "
+            if linea_actual:
+                y_position = draw_text(linea_actual.strip(), y_position)
 
         # Separador entre los datos del cliente y los productos
         y_position -= 2
@@ -486,17 +506,14 @@ class SaleOrderTicketController(http.Controller):
                     tax_groups[tax_rate] = tax_amount
                     base_groups[tax_rate] = line_base
 
-        # Mostrar primero todas las bases imponibles por tipo de IVA
+        # Mostrar primero todas las bases imponibles por tipo de IVA con formato solicitado
         for tax_rate in sorted(base_groups.keys()):
-            base_text = f"Base {format_decimal(tax_rate)}%: {format_decimal(base_groups[tax_rate])}€"
+            base_val = format_decimal(base_groups[tax_rate])
+            iva_val = format_decimal(tax_rate)
+            tax_val = format_decimal(tax_groups.get(tax_rate, 0))
+            base_text = f"{base_val}€ al {iva_val}%: {tax_val}€"
             base_text_width = p.stringWidth(base_text, font_name, font_size)
             p.drawString(page_width - margin - base_text_width, y_position, base_text)
-            y_position -= line_height
-        # Luego mostrar todos los importes de IVA por tipo
-        for tax_rate in sorted(tax_groups.keys()):
-            tax_text = f"IVA {format_decimal(tax_rate)}%: {format_decimal(tax_groups[tax_rate])}€"
-            tax_text_width = p.stringWidth(tax_text, font_name, font_size)
-            p.drawString(page_width - margin - tax_text_width, y_position, tax_text)
             y_position -= line_height
 
         # Espacio adicional antes del total
