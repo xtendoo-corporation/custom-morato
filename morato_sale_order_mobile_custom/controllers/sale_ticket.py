@@ -86,10 +86,11 @@ class SaleOrderTicketController(http.Controller):
             if company.city:
                 address += " " + company.city
             y_position = draw_text(address.strip(), y_position, centered=True)
+        # Imprimir móvil de la compañía justo encima del NIF
+        if company.mobile:
+            y_position = draw_text(f"Móvil: {company.mobile}", y_position, centered=True)
         if company.vat:
             y_position = draw_text(f"NIF: {company.vat}", y_position, centered=True)
-        if company.phone:
-            y_position = draw_text(f"Tel: {company.phone}", y_position, centered=True)
 
         # Separador después de la información de empresa
         y_position -= 5
@@ -322,10 +323,11 @@ class SaleOrderTicketController(http.Controller):
             if company.city:
                 address += " " + company.city
             y_position = draw_text(address.strip(), y_position, centered=True)
+        # Imprimir móvil de la compañía justo encima del NIF
+        if company.mobile:
+            y_position = draw_text(f"Móvil: {company.mobile}", y_position, centered=True)
         if company.vat:
             y_position = draw_text(f"NIF: {company.vat}", y_position, centered=True)
-        if company.phone:
-            y_position = draw_text(f"Tel: {company.phone}", y_position, centered=True)
 
         # Separador después de la información de empresa
         y_position -= 5
