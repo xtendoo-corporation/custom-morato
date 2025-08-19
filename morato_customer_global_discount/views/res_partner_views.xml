@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Add global discount field to customer form view -->
+        <record id="view_partner_form_global_discount" model="ir.ui.view">
+            <field name="name">res.partner.form.global.discount</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='sales_purchases']//group[@name='sale']" position="inside">
+                    <field name="global_discount_percentage"
+                           widget="percentage"
+                           string="Descuento Global (%)"
+                           help="Porcentaje de descuento global que se aplicará automáticamente en pedidos de venta y facturas"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Add global discount field to customer tree view -->
+        <record id="view_partner_tree_global_discount" model="ir.ui.view">
+            <field name="name">res.partner.tree.global.discount</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='phone']" position="after">
+                    <field name="global_discount_percentage"
+                           string="Descuento Global (%)"
+                           optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
