@@ -160,17 +160,16 @@ class SaleOrderTicketController(http.Controller):
                     else:
                         first_line_y -= (line_height - 1)
                         p.drawString(margin, first_line_y, product_line)
-                # Calcular precio unitario con IVA incluido
-                price_unit_iva = line.price_unit
-                if hasattr(line, 'tax_id') and line.tax_id:
-                    for tax in line.tax_id:
-                        if hasattr(tax, 'price_include') and tax.price_include:
-                            continue
-                        price_unit_iva += price_unit_iva * (tax.amount / 100)
+                # Calcular precio unitario real: price_total / cantidad
                 qty = line.product_uom_qty if hasattr(line, 'product_uom_qty') else line.quantity
+                line_total = getattr(line, 'price_total', None)
+                if qty and line_total is not None:
+                    price_unit_real = line_total / qty
+                else:
+                    price_unit_real = line.price_unit
                 # Mostrar cantidad x precio unitario con 4 decimales y coma
                 qty_text = int(qty) if qty == int(qty) else str(qty).replace('.', ',')
-                price_unit_text = str(f"{price_unit_iva:.4f}").replace('.', ',')
+                price_unit_text = str(f"{price_unit_real:.4f}").replace('.', ',')
                 qty_price_text = f"{qty_text} x {price_unit_text}€"
                 if hasattr(line, 'discount') and line.discount:
                     qty_price_text += f"  (-{format_decimal(line.discount)}%)"
@@ -178,11 +177,10 @@ class SaleOrderTicketController(http.Controller):
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
                 # Mostrar el total de la línea usando price_total (2 decimales y coma)
-                line_total = getattr(line, 'price_total', None)
                 if line_total is not None:
                     total_text = f"{format_decimal(line_total)}€"
                 else:
-                    total_text = f"{format_decimal(qty * price_unit_iva)}€"
+                    total_text = f"{format_decimal(qty * price_unit_real)}€"
                 total_width = p.stringWidth(total_text, font_name, font_size)
                 p.drawString(page_width - margin - total_width, y_position, total_text)
                 y_position = qty_price_y - (line_height)
