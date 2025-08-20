@@ -8,7 +8,13 @@
   .o_form_label:has(.o_mobile_hide),
   label:has(.o_mobile_hide),
   .o_form_label[for][for*="payment_term_id"],
-  label[for][for*="payment_term_id"] {
+  label[for][for*="payment_term_id"],
+  .o_form_label[for][for*="currency_id"],
+  label[for][for*="currency_id"],
+  .o_form_label[for][for*="validity_date"],
+  label[for][for*="validity_date"],
+  .o_form_label[for][for*="invoice_date_due"],
+  label[for][for*="invoice_date_due"] {
     display: none !important;
   }
   /* Oculta la etiqueta en la misma celda de tabla */

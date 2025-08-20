@@ -12,6 +12,7 @@
     ],
     "data": [
         "views/sale_report_views.xml",
+        "views/res_partner_search.xml",
     ],
     "installable": True,
     "auto_install": False,

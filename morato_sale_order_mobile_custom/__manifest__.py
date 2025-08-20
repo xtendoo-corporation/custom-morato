@@ -30,6 +30,7 @@
         # 'reports/sale_order_ticket_template.xml',
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
+        'views/report_invoice.xml',
     ],
     'assets': {
         'web.assets_backend': [

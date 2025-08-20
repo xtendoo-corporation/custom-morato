@@ -21,10 +21,23 @@
                             class="btn btn-secondary"
                             context="{'invoice_id': id}"
                             invisible="state != 'posted'">
-                    <i class="fa fa-print" title="Ver Ticket"/>
+                        <i class="fa fa-print" title="Ver Ticket"/>
                     </button>
                 </div>
             </xpath>
+
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+            <xpath expr="//div[@name='due_date']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+            <xpath expr="//div[@name='currency_div']" position="attributes">
+                <attribute name="class">o_mobile_hide</attribute>
+            </xpath>
+
         </field>
     </record>
+
+
 </odoo>

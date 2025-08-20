@@ -24,3 +24,4 @@ class ResPartner(models.Model):
 
     def name_get(self):
         return super().name_get()
+
