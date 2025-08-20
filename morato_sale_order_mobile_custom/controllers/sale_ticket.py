@@ -120,7 +120,7 @@ class SaleOrderTicketController(http.Controller):
         else:
             cliente_lines = [cliente_name]
         # Dibujar la primera línea con la etiqueta
-        y_position = draw_text(f"Pedido: {order.name}", y_position)
+        y_position = draw_text(f"Pedido", y_position)
         y_position = draw_text(f"{cliente_label}{cliente_lines[0]}", y_position)
         # Dibujar líneas adicionales del nombre del cliente (sin la etiqueta y sin tanto espacio inicial)
         for extra_line in cliente_lines[1:]:
@@ -133,31 +133,17 @@ class SaleOrderTicketController(http.Controller):
 
         # Líneas del pedido - con formato de tabla
         if order.order_line:
-            # Ya no necesitamos encabezados de tabla para el nuevo formato
             y_position -= 5  # Espacio antes de comenzar con los productos
-
-            # Definir ancho para precios (garantizar que no haya solapamiento)
             price_width = 13 * mm  # Espacio reservado para el precio
-
-            # Líneas de productos con nuevo formato de dos columnas
             for line in order.order_line:
-                p.setFont(font_name, font_size)  # Usar tamaño normal para el nombre del producto
-
-                # Columna 1: Producto - manejar nombres largos con múltiples líneas
+                p.setFont(font_name, font_size)
                 product_text = f"{line.product_id.name}"
-
-                # Calcular el espacio disponible para el texto del producto
                 text_width = page_width - (2 * margin) - price_width
-
-                # Calcular cuántos caracteres pueden caber en el espacio disponible
-                avg_char_width = p.stringWidth("m", font_name, font_size)  # ancho promedio de un carácter
-                max_chars_per_line = int(text_width / avg_char_width) - 2  # restar 2 para dar un margen extra
-
-                # Dividir el texto en líneas si es necesario
+                avg_char_width = p.stringWidth("m", font_name, font_size)
+                max_chars_per_line = int(text_width / avg_char_width) - 2
                 product_lines = []
                 words = product_text.split(' ')
                 current_line = ""
-
                 for word in words:
                     if len(current_line + word) <= max_chars_per_line:
                         current_line += word + " "
@@ -165,11 +151,8 @@ class SaleOrderTicketController(http.Controller):
                         if current_line:
                             product_lines.append(current_line.strip())
                         current_line = word + " "
-
                 if current_line:
                     product_lines.append(current_line.strip())
-
-                # Dibujar el nombre del producto
                 first_line_y = y_position
                 for i, product_line in enumerate(product_lines):
                     if i == 0:
@@ -177,28 +160,32 @@ class SaleOrderTicketController(http.Controller):
                     else:
                         first_line_y -= (line_height - 1)
                         p.drawString(margin, first_line_y, product_line)
-
-                # Precio total a la derecha (alineado con la primera línea del producto)
-                p.setFont(font_name, font_size)
-                subtotal = line.price_subtotal
-                total_text = f"{format_decimal(subtotal)}€"
-                total_width = p.stringWidth(total_text, font_name, font_size)
-                p.drawString(page_width - margin - total_width, y_position, total_text)
-
-                # Cantidad x Precio debajo del nombre del producto
-                qty_price_text = f"{int(line.product_uom_qty) if line.product_uom_qty == int(line.product_uom_qty) else format_decimal(line.product_uom_qty)} x {format_decimal(line.price_unit)}€"
-                # Si hay descuento, añadirlo al texto
-                if line.discount:
+                # Calcular precio unitario con IVA incluido
+                price_unit_iva = line.price_unit
+                if hasattr(line, 'tax_id') and line.tax_id:
+                    for tax in line.tax_id:
+                        if hasattr(tax, 'price_include') and tax.price_include:
+                            continue
+                        price_unit_iva += price_unit_iva * (tax.amount / 100)
+                qty = line.product_uom_qty if hasattr(line, 'product_uom_qty') else line.quantity
+                # Mostrar cantidad x precio unitario con 4 decimales y coma
+                qty_text = int(qty) if qty == int(qty) else str(qty).replace('.', ',')
+                price_unit_text = str(f"{price_unit_iva:.4f}").replace('.', ',')
+                qty_price_text = f"{qty_text} x {price_unit_text}€"
+                if hasattr(line, 'discount') and line.discount:
                     qty_price_text += f"  (-{format_decimal(line.discount)}%)"
                 qty_price_y = first_line_y - (line_height - 1)
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
-
-                # Calcular la posición Y para el próximo producto
-                # Consideramos el espacio usado por el nombre + la línea de cantidad/precio + espacio adicional
-                lines_used = len(product_lines)
-                y_position = qty_price_y - (line_height)  # Espacio después de cada producto
-
+                # Mostrar el total de la línea usando price_total (2 decimales y coma)
+                line_total = getattr(line, 'price_total', None)
+                if line_total is not None:
+                    total_text = f"{format_decimal(line_total)}€"
+                else:
+                    total_text = f"{format_decimal(qty * price_unit_iva)}€"
+                total_width = p.stringWidth(total_text, font_name, font_size)
+                p.drawString(page_width - margin - total_width, y_position, total_text)
+                y_position = qty_price_y - (line_height)
         # Línea separadora
         p.line(margin, y_position + 5, page_width - margin, y_position + 5)
         y_position -= 10
@@ -243,6 +230,7 @@ class SaleOrderTicketController(http.Controller):
             'docs': [invoice],
         })
 
+
     @http.route('/invoice_ticket/pdf/<int:invoice_id>', type='http', auth='user')
     def invoice_ticket_pdf(self, invoice_id):
         """Generar PDF del ticket de factura en formato 58mm con altura dinámica"""
@@ -275,8 +263,8 @@ class SaleOrderTicketController(http.Controller):
 
         # Filtrar líneas de producto válidas
         valid_product_lines = [line for line in invoice.invoice_line_ids
-                              if (not line.display_type or line.display_type == 'product')
-                              and line.name and line.name.strip()]
+                               if (not line.display_type or line.display_type == 'product')
+                               and line.name and line.name.strip()]
 
         # Calcular altura necesaria dinámicamente - usando estructura igual al ticket de venta
         company_lines = 5  # Nombre, dirección, NIF, teléfono, etc.
@@ -528,11 +516,17 @@ class SaleOrderTicketController(http.Controller):
         p.drawString(page_width - margin - total_text_width, y_position, total_text)
 
         # Más espacio debajo del total
-        y_position -= 25  # Aumenta la separación visual
+        y_position -= 10  # Reducido para que el total quede más visible
 
-        # Mensaje final - siempre debajo del total y centrado
+        # Mostrar número de cuenta bancaria de la compañía al final del ticket, centrado
         p.setFont(font_name, font_size)
-        p.drawString((page_width - p.stringWidth("Gracias por su compra", font_name, font_size)) / 2, y_position, "Gracias por su compra")
+        account_number = getattr(company, 'bank_account_number', None)
+        if account_number:
+            final_text = f"Cuenta bancaria: {account_number}"
+            p.drawString((page_width - p.stringWidth(final_text, font_name, font_size)) / 2, y_position, final_text)
+        else:
+            final_text = "Cuenta bancaria no disponible"
+            p.drawString((page_width - p.stringWidth(final_text, font_name, font_size)) / 2, y_position, final_text)
 
         # Finalizar PDF
         p.showPage()
