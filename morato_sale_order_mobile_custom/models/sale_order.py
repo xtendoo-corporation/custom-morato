@@ -40,7 +40,10 @@ class SaleOrder(models.Model):
             # Crear la factura
             invoice = self._create_invoices()
             if invoice:
-                # Confirmar la factura automáticamente
+                for inv_line in invoice.invoice_line_ids:
+                    sale_line = inv_line.sale_line_ids and inv_line.sale_line_ids[0] or False
+                    inv_line.box_units = sale_line.box_units if sale_line else 0
+                    inv_line.boxes = sale_line.boxes if sale_line else 0
                 invoice.action_post()
 
         return True

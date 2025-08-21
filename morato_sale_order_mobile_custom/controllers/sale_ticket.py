@@ -518,14 +518,20 @@ class SaleOrderTicketController(http.Controller):
 
         # Mostrar número de cuenta bancaria de la compañía al final del ticket, centrado
         p.setFont(font_name, font_size)
-        account_number = getattr(company, 'bank_account_number', None)
-        if account_number:
-            final_text = f"Cuenta bancaria: {account_number}"
-            p.drawString((page_width - p.stringWidth(final_text, font_name, font_size)) / 2, y_position, final_text)
-        else:
-            final_text = "Cuenta bancaria no disponible"
-            p.drawString((page_width - p.stringWidth(final_text, font_name, font_size)) / 2, y_position, final_text)
+        bank_account = request.env['res.partner.bank'].search([('partner_id', '=', company.partner_id.id)], limit=1)
+        account_number = bank_account.acc_number if bank_account else None
+        y_position -= line_height * 1.5
+        cuenta_label = "Cuenta bancaria:"
+        p.drawString(margin, y_position, cuenta_label)
+        y_position -= line_height  # Mover a la siguiente línea
 
+        # Se dibuja el número de cuenta o el mensaje alternativo, centrado
+        if account_number:
+            p.drawString((page_width - p.stringWidth(account_number, font_name, font_size)) / 2, y_position,
+                         account_number)
+        else:
+            p.drawString((page_width - p.stringWidth("No disponible", font_name, font_size)) / 2, y_position,
+                         "No disponible")
         # Finalizar PDF
         p.showPage()
         p.save()

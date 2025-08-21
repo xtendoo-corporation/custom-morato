@@ -36,14 +36,15 @@
         'web.assets_backend': [
             'morato_sale_order_mobile_custom/static/src/xml/sale_ticket_dynamic.xml',
             'morato_sale_order_mobile_custom/static/src/xml/invoice_ticket_template.xml',
-            'morato_sale_order_mobile_custom/static/src/xml/product_catalog_order_line.xml',
+
             'morato_sale_order_mobile_custom/static/src/js/sale_ticket_widget.js',
             'morato_sale_order_mobile_custom/static/src/js/invoice_ticket_widget.js',
             'morato_sale_order_mobile_custom/static/src/js/product_catalog_order_line.js',
+            'morato_sale_order_mobile_custom/static/src/xml/product_catalog_order_line.xml',
             # 'morato_sale_order_mobile_custom/static/src/js/sale_order_buttons.js',
             # 'morato_sale_order_mobile_custom/static/src/xml/form_view_extension.xml',
             'morato_sale_order_mobile_custom/static/src/scss/sale_portal.scss',
-            ]
+        ]
     },
     'installable': True,
     'auto_install': False,
