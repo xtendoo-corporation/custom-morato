@@ -43,7 +43,7 @@
                             type="action"
                             class="btn btn-secondary"
                             context="{'order_id': id}"
-                            invisible="state not in ['sale', 'done']">
+                    >
                         <i class="fa fa-print" title="Ver Ticket"/>
                     </button>
 
@@ -57,6 +57,20 @@
 
                 </div>
             </xpath>
+
+            <xpath expr="//field[@name='order_line']/kanban/field[@name='price_subtotal']" position="replace">
+                <field name="price_total"/>
+            </xpath>
+
+            <!-- Reemplazar el campo price_subtotal dentro de la tarjeta del kanban -->
+            <xpath expr="//field[@name='order_line']/kanban/templates//field[@name='price_subtotal']"
+                   position="replace">
+                <field name="price_total" class="fw-bolder float-end pe-1" widget="monetary"/>
+            </xpath>
         </field>
+    </record>
+
+    <record id="sale.action_order_report_all" model="ir.actions.act_window">
+        <field name="view_mode">pivot,graph,list,form</field>
     </record>
 </odoo>
