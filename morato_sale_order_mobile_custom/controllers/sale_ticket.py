@@ -163,13 +163,10 @@ class SaleOrderTicketController(http.Controller):
                 # Calcular precio unitario real: price_total / cantidad
                 qty = line.product_uom_qty if hasattr(line, 'product_uom_qty') else line.quantity
                 line_total = getattr(line, 'price_total', None)
-                if qty and line_total is not None:
-                    price_unit_real = line_total / qty
-                else:
-                    price_unit_real = line.price_unit
+                price_unit_real = line.price_unit
                 # Mostrar cantidad x precio unitario con 4 decimales y coma
                 qty_text = int(qty) if qty == int(qty) else str(qty).replace('.', ',')
-                price_unit_text = str(f"{price_unit_real:.4f}").replace('.', ',')
+                price_unit_text = str(f"{price_unit_real:.2f}").replace('.', ',')
                 qty_price_text = f"{qty_text} x {price_unit_text}€"
                 if hasattr(line, 'discount') and line.discount:
                     qty_price_text += f"  (-{format_decimal(line.discount)}%)"

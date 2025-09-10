@@ -43,6 +43,7 @@
                             type="action"
                             class="btn btn-secondary"
                             context="{'order_id': id}"
+                            invisible="state == 'sale'"
                     >
                         <i class="fa fa-print" title="Ver Ticket"/>
                     </button>
