@@ -442,13 +442,23 @@ class SaleOrderTicketController(http.Controller):
                 p.drawString(page_width - margin - total_width, y_position, total_text)
 
                 # Cantidad x Precio debajo del nombre del producto
+                # Cantidad x Precio debajo del nombre del producto
                 qty = line.quantity or 0
-                price = line.price_unit or 0
+                subtotal = line.price_subtotal or 0
+
+                # Calcular el precio unitario efectivo a partir del subtotal
+                if qty > 0:
+                    effective_price = subtotal / qty
+                else:
+                    effective_price = 0
+
                 qty_text = int(qty) if qty == int(qty) else format_decimal(qty)
-                qty_price_text = f"{qty_text} x {format_decimal(price)}€"
-                # Mostrar descuento si existe
+                qty_price_text = f"{qty_text} x {format_decimal(effective_price)}€"
+
+                # Mostrar descuento si existe (como información adicional)
                 if getattr(line, 'discount', 0):
                     qty_price_text += f"  (-{format_decimal(line.discount)}%)"
+
                 qty_price_y = first_line_y - (line_height - 1)
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
