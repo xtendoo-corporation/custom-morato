@@ -344,7 +344,10 @@ class SaleOrderTicketController(http.Controller):
                 cliente_lines.append(current_line.strip())
         else:
             cliente_lines = [cliente_name]
-        y_position = draw_text(f"Factura: {invoice.name}", y_position)
+        y_position = draw_text(
+            f"Factura: {'Borrador' if not invoice.name and invoice.state == 'draft' else invoice.name}",
+            y_position
+        )
         # Mostrar la fecha con etiqueta "Fecha:" antes de los datos del cliente
         fecha_text = f"Fecha: {invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else 'N/A'}"
         y_position = draw_text(fecha_text, y_position)
