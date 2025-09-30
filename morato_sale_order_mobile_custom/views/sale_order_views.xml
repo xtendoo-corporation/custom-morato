@@ -37,7 +37,7 @@
                             type="object"
                             string="Confirmar Pedido"
                             class="btn btn-primary"
-                            invisible="state in ['sale', 'done', 'cancel']"
+                            invisible="state in ['cancel']"
                     />
                     <button name="%(action_sale_ticket_client)d"
                             type="action"
