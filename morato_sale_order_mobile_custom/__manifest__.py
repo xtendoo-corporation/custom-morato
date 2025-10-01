@@ -31,12 +31,14 @@
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
         'views/report_invoice.xml',
+        'views/sale_order_line_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
             'morato_sale_order_mobile_custom/static/src/xml/sale_ticket_dynamic.xml',
             'morato_sale_order_mobile_custom/static/src/xml/invoice_ticket_template.xml',
-
+            # 'morato_sale_order_mobile_custom/static/src/js/sale_order_line_renderer.js',
+            'morato_sale_order_mobile_custom/static/src/js/sale_order_line_renderer_barcode.js',
             'morato_sale_order_mobile_custom/static/src/js/sale_ticket_widget.js',
             'morato_sale_order_mobile_custom/static/src/js/invoice_ticket_widget.js',
             'morato_sale_order_mobile_custom/static/src/js/product_catalog_order_line.js',
