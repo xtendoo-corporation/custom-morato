@@ -36,28 +36,67 @@ class SaleOrderTicketController(http.Controller):
 
         # Configurar fuente monoespaciada
         font_name = "Courier"
-        font_size = 9  # Reducimos el tamaño de la fuente a 9
-        line_height = 11  # Ajustamos la altura de línea para el nuevo tamaño
-        margin = 1 * mm  # Mantenemos el margen mínimo (1mm)
+        font_size = 9
+        line_height = 11
+        margin = 1 * mm
 
         # Función auxiliar para formatear números con coma decimal
         def format_decimal(value):
             return f"{value:.2f}".replace(".", ",")
 
+        # Función auxiliar para contar líneas reales de texto
+        def count_text_lines(text, max_width, temp_canvas):
+            if not text:
+                return 1
+            avg_char_width = temp_canvas.stringWidth("m", font_name, font_size)
+            max_chars_per_line = int(max_width / avg_char_width) - 2
+            words = text.split(' ')
+            lines = 0
+            current_line = ""
+            for word in words:
+                if len(current_line + word) <= max_chars_per_line:
+                    current_line += word + " "
+                else:
+                    if current_line:
+                        lines += 1
+                    current_line = word + " "
+            if current_line:
+                lines += 1
+            return max(lines, 1)
+
+        # Crear canvas temporal para calculos
+        temp_buffer = BytesIO()
+        temp_canvas = canvas.Canvas(temp_buffer, pagesize=(page_width, 100 * mm))
+        temp_canvas.setFont(font_name, font_size)
+
         # Calcular altura necesaria dinámicamente
-        company_lines = 5  # Nombre, dirección, NIF, teléfono, etc.
-        base_lines = 8  # Título, pedido, cliente, fecha, total, mensaje final, espacios
-        product_lines = len(order.order_line) * 2  # 2 líneas por producto (nombre + cantidad/precio)
-        separators = 4  # Espacios adicionales y separadores (uno más para separar la info de empresa)
+        company_lines = 5
+        base_lines = 8
+        separators = 6  # Aumentar separadores
 
-        total_lines = company_lines + base_lines + product_lines + separators
-        page_height = (total_lines * line_height) + (20 * mm)
+        # Calcular líneas reales del cliente
+        cliente_name = order.partner_id.name or ''
+        max_cliente_width = page_width - 2 * margin - temp_canvas.stringWidth("Cliente: ", font_name, font_size)
+        cliente_extra_lines = count_text_lines(cliente_name, max_cliente_width, temp_canvas) - 1
 
-        # Altura mínima para evitar tickets muy pequeños
-        min_height = 80 * mm
-        page_height = max(page_height, min_height)
+        # Calcular líneas reales de productos
+        product_lines = 0
+        if order.order_line:
+            text_width = page_width - (2 * margin) - (13 * mm)  # Espacio para precio
+            for line in order.order_line:
+                product_name = line.product_id.name or ""
+                name_lines = count_text_lines(product_name, text_width, temp_canvas)
+                product_lines += name_lines + 1  # +1 para la línea de cantidad/precio
 
-        # Crear canvas con altura dinámica
+        total_lines = company_lines + base_lines + product_lines + separators + cliente_extra_lines
+        page_height = (total_lines * line_height) + (3 * mm)  # Más margen de seguridad
+
+        # Altura mínima y máxima
+        min_height = 120 * mm
+        max_height = 600 * mm  # Límite máximo de seguridad
+        page_height = max(min_height, min(page_height, max_height))
+
+        # Crear canvas definitivo con altura calculada
         p = canvas.Canvas(buffer, pagesize=(page_width, page_height))
 
         # Posición inicial
@@ -86,7 +125,6 @@ class SaleOrderTicketController(http.Controller):
             if company.city:
                 address += " " + company.city
             y_position = draw_text(address.strip(), y_position, centered=True)
-        # Imprimir móvil de la compañía justo encima del NIF
         if company.mobile:
             y_position = draw_text(f"Móvil: {company.mobile}", y_position, centered=True)
         if company.vat:
@@ -97,15 +135,13 @@ class SaleOrderTicketController(http.Controller):
         p.line(margin, y_position + 3, page_width - margin, y_position + 3)
         y_position -= 5
 
-        # Información del pedido - alineada a la izquierda como antes
+        # Información del pedido
         p.setFont(font_name, font_size)
-        # --- NOMBRE DEL CLIENTE EN DOS LÍNEAS SI ES LARGO ---
         cliente_label = f"Cliente: "
         cliente_name = order.partner_id.name or ''
         max_cliente_width = page_width - 2 * margin - p.stringWidth(cliente_label, font_name, font_size)
         cliente_lines = []
         if p.stringWidth(cliente_name, font_name, font_size) > max_cliente_width:
-            # Dividir el nombre del cliente en varias líneas si es necesario
             words = cliente_name.split(' ')
             current_line = ''
             for word in words:
@@ -119,22 +155,20 @@ class SaleOrderTicketController(http.Controller):
                 cliente_lines.append(current_line.strip())
         else:
             cliente_lines = [cliente_name]
-        # Dibujar la primera línea con la etiqueta
+
         y_position = draw_text(f"Pedido", y_position)
         y_position = draw_text(f"{cliente_label}{cliente_lines[0]}", y_position)
-        # Dibujar líneas adicionales del nombre del cliente (sin la etiqueta y sin tanto espacio inicial)
         for extra_line in cliente_lines[1:]:
             y_position = draw_text(f"{extra_line}", y_position)
         y_position = draw_text(f"Fecha: {order.date_order.strftime('%d/%m/%Y %H:%M')}", y_position)
         y_position -= 5
-        # Línea separadora debajo de la información del pedido
         p.line(margin, y_position + 3, page_width - margin, y_position + 3)
         y_position -= 5
 
-        # Líneas del pedido - con formato de tabla
+        # Líneas del pedido
         if order.order_line:
-            y_position -= 5  # Espacio antes de comenzar con los productos
-            price_width = 13 * mm  # Espacio reservado para el precio
+            y_position -= 5
+            price_width = 13 * mm
             for line in order.order_line:
                 p.setFont(font_name, font_size)
                 product_text = f"{line.product_id.name}"
@@ -153,6 +187,7 @@ class SaleOrderTicketController(http.Controller):
                         current_line = word + " "
                 if current_line:
                     product_lines.append(current_line.strip())
+
                 first_line_y = y_position
                 for i, product_line in enumerate(product_lines):
                     if i == 0:
@@ -160,11 +195,10 @@ class SaleOrderTicketController(http.Controller):
                     else:
                         first_line_y -= (line_height - 1)
                         p.drawString(margin, first_line_y, product_line)
-                # Calcular precio unitario real: price_total / cantidad
+
                 qty = line.product_uom_qty if hasattr(line, 'product_uom_qty') else line.quantity
                 line_total = getattr(line, 'price_total', None)
                 price_unit_real = line.price_unit
-                # Mostrar cantidad x precio unitario con 4 decimales y coma
                 qty_text = int(qty) if qty == int(qty) else str(qty).replace('.', ',')
                 price_unit_text = str(f"{price_unit_real:.2f}").replace('.', ',')
                 qty_price_text = f"{qty_text} x {price_unit_text}€"
@@ -173,25 +207,25 @@ class SaleOrderTicketController(http.Controller):
                 qty_price_y = first_line_y - (line_height - 1)
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
-                # Mostrar el total de la línea usando price_total (2 decimales y coma)
+
                 if line_total is not None:
                     total_text = f"{format_decimal(line_total)}€"
                 else:
                     total_text = f"{format_decimal(qty * price_unit_real)}€"
                 total_width = p.stringWidth(total_text, font_name, font_size)
                 p.drawString(page_width - margin - total_width, y_position, total_text)
-                y_position = qty_price_y - (line_height)
+                y_position = qty_price_y - line_height
+
         # Línea separadora
         p.line(margin, y_position + 5, page_width - margin, y_position + 5)
         y_position -= 10
-
 
         # Total alineado a la derecha
         total_text = f"Total: {format_decimal(order.amount_total)}€"
         total_width = p.stringWidth(total_text, font_name, font_size + 2)
         p.setFont(font_name, font_size + 2)
         p.drawString(page_width - margin - total_width, y_position, total_text)
-        y_position -= 15  # Más espacio debajo del total
+        y_position -= 15
 
         # Mensaje final
         p.setFont(font_name, font_size)
@@ -225,7 +259,6 @@ class SaleOrderTicketController(http.Controller):
             'docs': [invoice],
         })
 
-
     @http.route('/invoice_ticket/pdf/<int:invoice_id>', type='http', auth='user')
     def invoice_ticket_pdf(self, invoice_id):
         """Generar PDF del ticket de factura en formato 58mm con altura dinámica"""
@@ -245,13 +278,33 @@ class SaleOrderTicketController(http.Controller):
 
         # Configurar fuente monoespaciada igual que en ticket de venta
         font_name = "Courier"
-        font_size = 9  # Usar mismo tamaño que en ticket de venta
-        line_height = 11  # Ajustamos la altura de línea para el nuevo tamaño
-        margin = 1 * mm  # Usar mismo margen que en ticket de venta (1mm)
+        font_size = 9
+        line_height = 11
+        margin = 1 * mm
 
         # Función auxiliar para formatear números con coma decimal
         def format_decimal(value):
             return f"{value:.2f}".replace(".", ",")
+
+        # Función auxiliar para contar líneas reales de texto
+        def count_text_lines(text, max_width, temp_canvas):
+            if not text:
+                return 1
+            avg_char_width = temp_canvas.stringWidth("m", font_name, font_size)
+            max_chars_per_line = int(max_width / avg_char_width) - 2
+            words = text.split(' ')
+            lines = 0
+            current_line = ""
+            for word in words:
+                if len(current_line + word) <= max_chars_per_line:
+                    current_line += word + " "
+                else:
+                    if current_line:
+                        lines += 1
+                    current_line = word + " "
+            if current_line:
+                lines += 1
+            return max(lines, 1)
 
         # Obtener el cliente (partner)
         partner = invoice.partner_id
@@ -261,23 +314,55 @@ class SaleOrderTicketController(http.Controller):
                                if (not line.display_type or line.display_type == 'product')
                                and line.name and line.name.strip()]
 
-        # Calcular altura necesaria dinámicamente - usando estructura igual al ticket de venta
-        company_lines = 5  # Nombre, dirección, NIF, teléfono, etc.
-        # Añadimos más líneas para la información extra del cliente
-        customer_extra_lines = 4  # NIF, dirección, población, móvil
-        base_lines = 8  # Título, factura, cliente, fecha, total, mensaje final
-        product_lines = len(valid_product_lines) * 2  # 2 líneas por producto (nombre + cantidad/precio)
-        separators = 4  # Espacios adicionales y separadores
-        tax_lines = 3  # Base imponible + líneas de IVA
+        # Crear canvas temporal para cálculos
+        temp_buffer = BytesIO()
+        temp_canvas = canvas.Canvas(temp_buffer, pagesize=(page_width, 100 * mm))
+        temp_canvas.setFont(font_name, font_size)
 
-        total_lines = company_lines + base_lines + product_lines + separators + tax_lines + customer_extra_lines
-        page_height = (total_lines * line_height) + (20 * mm)  # Margen superior e inferior
+        # Calcular altura necesaria dinámicamente
+        company_lines = 5
+        base_lines = 10  # Ajustado para incluir datos del cliente
+        separators = 6
+        tax_lines = 4  # Base imponible + líneas de IVA + total
+        bank_lines = 3  # Cuenta bancaria
 
-        # Altura mínima para evitar tickets muy pequeños
-        min_height = 80 * mm
-        page_height = max(page_height, min_height)
+        # Calcular líneas reales del cliente
+        if partner.name:
+            max_cliente_width = page_width - 2 * margin
+            cliente_extra_lines = count_text_lines(partner.name, max_cliente_width, temp_canvas) - 1
+            # Agregar líneas adicionales para otros datos del cliente (NIF, dirección, etc.)
+            cliente_extra_lines += 4  # NIF, dirección, población, teléfono
+        else:
+            cliente_extra_lines = 0
 
-        # Crear canvas con altura dinámica
+        # Calcular líneas reales de productos
+        product_lines = 0
+        if valid_product_lines:
+            text_width = page_width - (2 * margin) - (13 * mm)  # Espacio para precio
+            for line in valid_product_lines:
+                product_name = line.product_id.name if line.product_id else line.name
+                name_lines = count_text_lines(product_name or "", text_width, temp_canvas)
+                product_lines += name_lines + 1  # +1 para la línea de cantidad/precio
+
+        # Calcular líneas dinámicas de impuestos
+        tax_groups = {}
+        for line in valid_product_lines:
+            for tax in line.tax_ids:
+                tax_rate = tax.amount
+                if tax_rate not in tax_groups:
+                    tax_groups[tax_rate] = 0
+
+        dynamic_tax_lines = len(tax_groups) + 2  # +2 para base imponible y total
+
+        total_lines = company_lines + base_lines + product_lines + separators + dynamic_tax_lines + cliente_extra_lines + bank_lines
+        page_height = (total_lines * line_height) + (2 * mm)  # Margen de seguridad
+
+        # Altura mínima y máxima
+        min_height = 120 * mm
+        max_height = 600 * mm
+        page_height = max(min_height, min(page_height, max_height))
+
+        # Crear canvas definitivo con altura calculada
         p = canvas.Canvas(buffer, pagesize=(page_width, page_height))
 
         # Posición inicial
@@ -306,7 +391,6 @@ class SaleOrderTicketController(http.Controller):
             if company.city:
                 address += " " + company.city
             y_position = draw_text(address.strip(), y_position, centered=True)
-        # Imprimir móvil de la compañía justo encima del NIF
         if company.mobile:
             y_position = draw_text(f"Móvil: {company.mobile}", y_position, centered=True)
         if company.vat:
@@ -317,33 +401,8 @@ class SaleOrderTicketController(http.Controller):
         p.line(margin, y_position + 3, page_width - margin, y_position + 3)
         y_position -= 5
 
-        # Título
-        # p.setFont(font_name, font_size + 2)
-        # y_position = draw_text("*** FACTURA ***", y_position)
-        y_position -= 5
-
-        # Información de la factura - alineada a la izquierda como en el ticket de venta
+        # Información de la factura
         p.setFont(font_name, font_size)
-        # --- NOMBRE DEL CLIENTE EN VARIAS LÍNEAS SI ES LARGO ---
-        cliente_label = f"Cliente: "
-        cliente_name = partner.name or ''
-        max_cliente_width = page_width - 2 * margin - p.stringWidth(cliente_label, font_name, font_size)
-        cliente_lines = []
-        if p.stringWidth(cliente_name, font_name, font_size) > max_cliente_width:
-            # Dividir el nombre del cliente en varias líneas si es necesario
-            words = cliente_name.split(' ')
-            current_line = ''
-            for word in words:
-                if p.stringWidth(current_line + word + ' ', font_name, font_size) <= max_cliente_width:
-                    current_line += word + ' '
-                else:
-                    if current_line:
-                        cliente_lines.append(current_line.strip())
-                    current_line = word + ' '
-            if current_line:
-                cliente_lines.append(current_line.strip())
-        else:
-            cliente_lines = [cliente_name]
         if invoice.move_type == 'out_refund':
             y_position = draw_text("Factura Rectificativa", y_position)
             if not invoice.name and invoice.state == 'draft':
@@ -354,10 +413,11 @@ class SaleOrderTicketController(http.Controller):
             y_position = draw_text("Factura Borrador", y_position)
         else:
             y_position = draw_text(f"Factura: {invoice.name}", y_position)
-        # Mostrar la fecha con etiqueta "Fecha:" antes de los datos del cliente
+
         fecha_text = f"Fecha: {invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else 'N/A'}"
         y_position = draw_text(fecha_text, y_position)
-        # Información del cliente, encabezado "Cliente:" y luego los datos en líneas independientes
+
+        # Información del cliente
         y_position = draw_text("Cliente:", y_position)
         cliente_datos = []
         if partner.name:
@@ -375,6 +435,7 @@ class SaleOrderTicketController(http.Controller):
             cliente_datos.append(address.strip())
         if partner.phone:
             cliente_datos.append(partner.phone)
+
         # Dividir cada dato en varias líneas si es necesario
         for dato in cliente_datos:
             max_width = page_width - 2 * margin
@@ -396,28 +457,18 @@ class SaleOrderTicketController(http.Controller):
         p.line(margin, y_position + 3, page_width - margin, y_position + 3)
         y_position -= 3
 
-        # Líneas de la factura - con formato de dos columnas
+        # Líneas de la factura
         if valid_product_lines:
-            y_position -= 5  # Espacio antes de comenzar con los productos
+            y_position -= 5
+            price_width = 13 * mm
 
-            # Definir ancho para precios (garantizar que no haya solapamiento)
-            price_width = 13 * mm  # Espacio reservado para el precio
-
-            # Líneas de productos con nuevo formato de dos columnas
             for line in valid_product_lines:
-                p.setFont(font_name, font_size)  # Usar mismo tamaño que en ticket de venta
-
-                # Columna 1: Producto - manejar nombres largos con múltiples líneas
+                p.setFont(font_name, font_size)
                 product_text = f"{line.product_id.name if line.product_id else line.name}"
-
-                # Calcular el espacio disponible para el texto del producto
                 text_width = page_width - (2 * margin) - price_width
+                avg_char_width = p.stringWidth("m", font_name, font_size)
+                max_chars_per_line = int(text_width / avg_char_width) - 2
 
-                # Calcular cuántos caracteres pueden caber en el espacio disponible
-                avg_char_width = p.stringWidth("m", font_name, font_size)  # ancho promedio de un carácter
-                max_chars_per_line = int(text_width / avg_char_width) - 2  # restar 2 para dar un margen extra
-
-                # Dividir el texto en líneas si es necesario
                 product_lines = []
                 words = product_text.split(' ')
                 current_line = ""
@@ -442,8 +493,7 @@ class SaleOrderTicketController(http.Controller):
                         first_line_y -= (line_height - 1)
                         p.drawString(margin, first_line_y, product_line)
 
-                # Precio total a la derecha (alineado con la primera línea del producto)
-                # Usamos price_subtotal que es el campo importe de la línea (cantidad * precio unitario)
+                # Precio total a la derecha
                 p.setFont(font_name, font_size)
                 subtotal = line.price_subtotal
                 total_text = f"{format_decimal(subtotal)}€"
@@ -451,11 +501,9 @@ class SaleOrderTicketController(http.Controller):
                 p.drawString(page_width - margin - total_width, y_position, total_text)
 
                 # Cantidad x Precio debajo del nombre del producto
-                # Cantidad x Precio debajo del nombre del producto
                 qty = line.quantity or 0
                 subtotal = line.price_subtotal or 0
 
-                # Calcular el precio unitario efectivo a partir del subtotal
                 if qty > 0:
                     effective_price = subtotal / qty
                 else:
@@ -464,7 +512,6 @@ class SaleOrderTicketController(http.Controller):
                 qty_text = int(qty) if qty == int(qty) else format_decimal(qty)
                 qty_price_text = f"{qty_text} x {format_decimal(effective_price)}€"
 
-                # Mostrar descuento si existe (como información adicional)
                 if getattr(line, 'discount', 0):
                     qty_price_text += f"  (-{format_decimal(line.discount)}%)"
 
@@ -472,12 +519,9 @@ class SaleOrderTicketController(http.Controller):
                 p.setFont(font_name, font_size)
                 p.drawString(margin, qty_price_y, qty_price_text)
 
-                # Calcular la posición Y para el próximo producto
-                # Consideramos el espacio usado por el nombre + la línea de cantidad/precio + espacio adicional
-                lines_used = len(product_lines)
-                y_position = qty_price_y - (line_height)  # Espacio después de cada producto
+                y_position = qty_price_y - line_height
 
-        # Si no se encontraron líneas de productos, mostrar mensaje
+        # Si no se encontraron líneas de productos
         if not valid_product_lines:
             y_position = draw_text("No hay productos en esta factura", y_position, centered=True)
             y_position -= 2
@@ -486,7 +530,7 @@ class SaleOrderTicketController(http.Controller):
         p.line(margin, y_position + 5, page_width - margin, y_position + 5)
         y_position -= 10
 
-        # Información del IVA - alineada a la derecha (ya no centrada)
+        # Información del IVA - alineada a la derecha
         p.setFont(font_name, font_size)
 
         # Base imponible
@@ -495,7 +539,7 @@ class SaleOrderTicketController(http.Controller):
         p.drawString(page_width - margin - base_text_width, y_position, base_text)
         y_position -= line_height
 
-        # Agrupar impuestos por tipo de IVA y calcular base imponible por cada tipo
+        # Agrupar impuestos por tipo de IVA
         tax_groups = {}
         base_groups = {}
         for line in valid_product_lines:
@@ -510,7 +554,7 @@ class SaleOrderTicketController(http.Controller):
                     tax_groups[tax_rate] = tax_amount
                     base_groups[tax_rate] = line_base
 
-        # Mostrar primero todas las bases imponibles por tipo de IVA con formato solicitado
+        # Mostrar líneas de IVA
         for tax_rate in sorted(base_groups.keys()):
             base_val = format_decimal(base_groups[tax_rate])
             iva_val = format_decimal(tax_rate)
@@ -529,25 +573,25 @@ class SaleOrderTicketController(http.Controller):
         total_text_width = p.stringWidth(total_text, font_name, font_size + 2)
         p.drawString(page_width - margin - total_text_width, y_position, total_text)
 
-        # Más espacio debajo del total
-        y_position -= 10  # Reducido para que el total quede más visible
+        # Espacio reducido debajo del total
+        y_position -= 15
 
-        # Mostrar número de cuenta bancaria de la compañía al final del ticket, centrado
+        # Mostrar número de cuenta bancaria de la compañía
         p.setFont(font_name, font_size)
         bank_account = request.env['res.partner.bank'].search([('partner_id', '=', company.partner_id.id)], limit=1)
         account_number = bank_account.acc_number if bank_account else None
-        y_position -= line_height * 1.5
+
         cuenta_label = "Cuenta bancaria:"
         p.drawString(margin, y_position, cuenta_label)
-        y_position -= line_height  # Mover a la siguiente línea
+        y_position -= line_height
 
-        # Se dibuja el número de cuenta o el mensaje alternativo, centrado
         if account_number:
             p.drawString((page_width - p.stringWidth(account_number, font_name, font_size)) / 2, y_position,
                          account_number)
         else:
             p.drawString((page_width - p.stringWidth("No disponible", font_name, font_size)) / 2, y_position,
                          "No disponible")
+
         # Finalizar PDF
         p.showPage()
         p.save()
@@ -556,7 +600,7 @@ class SaleOrderTicketController(http.Controller):
         pdf_data = buffer.getvalue()
         buffer.close()
 
-        # Generar respuesta exactamente igual que el ticket de venta
+        # Generar respuesta
         response = request.make_response(
             pdf_data,
             headers=[
