@@ -2,108 +2,143 @@
 
 import { registry } from '@web/core/registry';
 import { patch } from '@web/core/utils/patch';
-import { SaleOrderLineOne2Many } from '@sale/js/sale_order_line_field/sale_order_line_field';
-import { SaleOrderLineListRenderer } from '@sale/js/sale_order_line_field/sale_order_line_field';
+import { ListRenderer } from "@web/views/list/list_renderer";
+import { X2ManyField } from "@web/views/fields/x2many/x2many_field";
 
 console.log('[BARCODE FIELD] Iniciando patch para campo barcode');
 
-// Patch para el componente One2Many
-patch(SaleOrderLineOne2Many.prototype, {
+// Patch para X2ManyField (campo One2Many/Many2Many)
+patch(X2ManyField.prototype, {
     setup() {
         super.setup();
-        console.log('[BARCODE FIELD] Setup completado');
+        console.log('[BARCODE FIELD] X2ManyField Setup completado');
+
+        // Observar cambios después del guardado
+        this._observeChanges();
     },
 
-    async _onAdd(ev) {
-        // Llamar al método original
-        const result = await super._onAdd(ev);
-
-        // Después de agregar una línea, hacer focus en el campo barcode
+    _observeChanges() {
+        // Observer para detectar cuando se agregan nuevas líneas
         setTimeout(() => {
-            const newBarcodeField = document.querySelector('.o_field_sol_o2m .o_data_row:last-child .o_barcode_field');
-            if (newBarcodeField) {
-                newBarcodeField.focus();
-                console.log('[BARCODE FIELD] Focus establecido en nuevo campo barcode');
-            }
-        }, 100);
-
-        return result;
-    }
-});
-
-// Patch para el renderer de lista
-patch(SaleOrderLineListRenderer.prototype, {
-    setup() {
-        super.setup();
-        this._setupBarcodeFieldEvents();
-    },
-
-    _setupBarcodeFieldEvents() {
-        console.log('[BARCODE FIELD] Configurando eventos para campos barcode');
-    },
-
-    async _renderView() {
-        const result = await super._renderView();
-
-        // Configurar eventos después del render
-        this._setupBarcodeAutoFocus();
-
-        return result;
-    },
-
-    _setupBarcodeAutoFocus() {
-        // Auto-focus en el primer campo barcode vacío cuando se carga la vista
-        setTimeout(() => {
-            const firstEmptyBarcode = document.querySelector('.o_field_sol_o2m .o_barcode_field:not([value])');
-            if (firstEmptyBarcode) {
-                firstEmptyBarcode.focus();
-                console.log('[BARCODE FIELD] Auto-focus en primer campo barcode vacío');
-            }
-        }, 200);
-
-        // Configurar eventos para todos los campos barcode
-        const barcodeFields = document.querySelectorAll('.o_barcode_field, .o_barcode_field_mobile');
-        barcodeFields.forEach(field => {
-            // Evento cuando se completa el escaneo (Enter)
-            field.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    console.log('[BARCODE FIELD] Enter detectado en campo barcode');
-                    // El onchange se ejecutará automáticamente
-                    // Hacer focus en el siguiente campo barcode después de un delay
-                    setTimeout(() => {
-                        this._focusNextBarcodeField();
-                    }, 500);
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (mutation.addedNodes.length > 0) {
+                        setTimeout(() => {
+                            this._autoFocusBarcode();
+                        }, 150);
+                        break;
+                    }
                 }
             });
 
-            // Evento para resaltar el campo cuando tiene foco
-            field.addEventListener('focus', () => {
-                field.style.backgroundColor = '#e3f2fd';
-                field.style.borderColor = '#007bff';
-            });
-
-            field.addEventListener('blur', () => {
-                field.style.backgroundColor = '#f8fff8';
-                field.style.borderColor = '#28a745';
-            });
-        });
+            const container = document.querySelector('.o_field_one2many, .o_field_many2many');
+            if (container) {
+                observer.observe(container, {
+                    childList: true,
+                    subtree: true
+                });
+                console.log('[BARCODE FIELD] Observer configurado');
+            }
+        }, 300);
     },
 
-    _focusNextBarcodeField() {
-        // Buscar el siguiente campo barcode vacío y hacer focus
-        const nextEmptyBarcode = document.querySelector('.o_field_sol_o2m .o_barcode_field:not([value]):not(:focus)');
-        if (nextEmptyBarcode) {
-            nextEmptyBarcode.focus();
-            console.log('[BARCODE FIELD] Focus movido al siguiente campo barcode');
-        } else {
-            // Si no hay más campos barcode, agregar una nueva línea
-            console.log('[BARCODE FIELD] No hay más campos - agregando nueva línea');
-            const addButton = document.querySelector('.o_field_sol_o2m .o_list_button_add');
-            if (addButton) {
-                addButton.click();
+    _autoFocusBarcode() {
+        const lastBarcodeField = document.querySelector('.o_data_row:last-child .o_barcode_field_mobile input, .o_data_row:last-child .o_barcode_field input');
+
+        if (lastBarcodeField && document.activeElement !== lastBarcodeField) {
+            lastBarcodeField.focus();
+
+            if (typeof lastBarcodeField.select === 'function') {
+                lastBarcodeField.select();
             }
+
+            console.log('[BARCODE FIELD] Focus establecido en último barcode');
         }
     }
 });
 
-console.log('[BARCODE FIELD] Patch aplicado correctamente');
+// Patch para ListRenderer (manejo de eventos de teclado)
+patch(ListRenderer.prototype, {
+    setup() {
+        super.setup();
+        console.log('[BARCODE FIELD] ListRenderer Setup completado');
+    },
+
+    async onCellKeydown(hotkey, ev) {
+        const result = await super.onCellKeydown(hotkey, ev);
+
+        // Detectar Enter en campo barcode
+        if (hotkey === 'enter' &&
+            (ev.target.classList.contains('o_barcode_field_mobile') ||
+             ev.target.classList.contains('o_barcode_field'))) {
+
+            console.log('[BARCODE FIELD] Enter detectado en barcode');
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            // Agregar nueva línea
+            setTimeout(() => {
+                const addButton = document.querySelector('.o_field_x2many_list_row_add a');
+                if (addButton) {
+                    console.log('[BARCODE FIELD] Agregando nueva línea');
+                    addButton.click();
+
+                    // Enfocar el nuevo campo barcode
+                    setTimeout(() => {
+                        const newBarcode = document.querySelector('.o_data_row:last-child .o_barcode_field_mobile input, .o_data_row:last-child .o_barcode_field input');
+                        if (newBarcode) {
+                            newBarcode.focus();
+
+                            if (typeof newBarcode.select === 'function') {
+                                newBarcode.select();
+                            }
+
+                            console.log('[BARCODE FIELD] Nuevo barcode enfocado');
+                        }
+                    }, 200);
+                }
+            }, 100);
+        }
+
+        return result;
+    }
+});
+
+// Sistema de respaldo con intervalo
+let autofocusInterval;
+let lastFocusedElement = null;
+
+function startBarcodeAutofocus() {
+    console.log('[BARCODE FIELD] Sistema de respaldo iniciado');
+
+    autofocusInterval = setInterval(() => {
+        // No hacer nada si ya hay un barcode enfocado
+        const activeEl = document.activeElement;
+        if (activeEl?.classList.contains('o_barcode_field_mobile') ||
+            activeEl?.classList.contains('o_barcode_field')) {
+            lastFocusedElement = activeEl;
+            return;
+        }
+
+        // Buscar el último campo barcode vacío
+        const allBarcodes = Array.from(
+            document.querySelectorAll('.o_barcode_field_mobile input, .o_barcode_field input')
+        );
+
+        const lastEmptyBarcode = allBarcodes.reverse().find(field => !field.value);
+
+        if (lastEmptyBarcode && lastEmptyBarcode !== lastFocusedElement) {
+            lastEmptyBarcode.focus();
+
+            if (typeof lastEmptyBarcode.select === 'function') {
+                lastEmptyBarcode.select();
+            }
+
+            lastFocusedElement = lastEmptyBarcode;
+            console.log('[BARCODE FIELD] Autofocus de respaldo aplicado');
+        }
+    }, 500);
+}
+
+// Iniciar sistema de respaldo
+setTimeout(startBarcodeAutofocus, 1500);

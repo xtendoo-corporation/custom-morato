@@ -27,6 +27,8 @@
                        placeholder="📱 Escanea código de barras para encontrar el producto..."
                        class="o_barcode_field_mobile"
                        widget="char"
+                       options="{'autofocus': True}"
+                       default_focus="1"
                         />
             </xpath>
         </field>
