@@ -37,9 +37,15 @@ class SaleOrder(models.Model):
 
         # 3. Crear la factura si no existe
         if not self.invoice_ids and self.state == 'sale':
-            # Crear la factura
-            invoice = self._create_invoices()
-            if invoice:
+            # Ejecutar el wizard estándar de Odoo para crear la factura
+            wizard = self.env['sale.advance.payment.inv'].create({
+                'advance_payment_method': 'delivered',
+                'sale_order_ids': [(6, 0, self.ids)],
+            })
+            res = wizard.create_invoices()
+            # Confirmar la factura automáticamente si se ha creado
+            if res and res.get('res_id'):
+                invoice = self.env['account.move'].browse(res['res_id'])
                 for inv_line in invoice.invoice_line_ids:
                     sale_line = inv_line.sale_line_ids and inv_line.sale_line_ids[0] or False
                     inv_line.box_units = sale_line.box_units if sale_line else 0

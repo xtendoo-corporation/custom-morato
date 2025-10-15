@@ -504,7 +504,7 @@ class SaleOrderTicketController(http.Controller):
                 qty = line.quantity or 0
                 subtotal = line.price_subtotal or 0
 
-                if qty > 0:
+                if qty != 0:
                     effective_price = subtotal / qty
                 else:
                     effective_price = 0

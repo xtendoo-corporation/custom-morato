@@ -33,3 +33,11 @@ class SaleOrderLine(models.Model):
                         'message': f'No se encontró ningún producto con el código "{self.barcode}"'
                     }
                 }
+
+    @api.onchange('boxes', 'product_id')
+    def _onchange_boxes(self):
+        """Calculate quantity based on boxes and box_units when boxes change, only if result is integer"""
+        if self.boxes and self.box_units:
+            qty = self.boxes * self.box_units
+            if float(qty).is_integer():
+                self.product_uom_qty = qty
