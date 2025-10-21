@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_invoice_report_search_inherit_morato" model="ir.ui.view">
+        <field name="name">account.invoice.report.search.inherit.morato</field>
+        <field name="model">account.invoice.report</field>
+        <field name="inherit_id" ref="account.view_account_invoice_report_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="inside">
+                <filter string="Hoy"
+                        name="today"
+                        domain="[('invoice_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('invoice_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"
+                        help="Facturas del día de hoy"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account.action_account_invoice_report_all" model="ir.actions.act_window">
+        <field name="view_mode">pivot,graph</field>
+    </record>
+
+</odoo>

@@ -9,10 +9,12 @@
         "sale",
         "report_xlsx",
         "web",
+        "account",
     ],
     "data": [
         "views/sale_report_views.xml",
         "views/res_partner_search.xml",
+        "views/invoice_report_views.xml",
     ],
     "installable": True,
     "auto_install": False,
